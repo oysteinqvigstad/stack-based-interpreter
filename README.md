@@ -2,6 +2,9 @@
 
 * Submission Deadline: **21.04.2023 - 23:59**
 * Peer-review Deadline: **28.04.2023 - 23:59**
+* Submission must be done through [the submission system](https://10.212.175.82)
+   - https://10.212.175.82
+   - Hash: `cg49jme8eh9dbc0db0sg`
 * Programming language: Rust or Haskell 
 
 

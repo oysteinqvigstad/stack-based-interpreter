@@ -1,21 +1,16 @@
-use std::fs::copy;
-use std::ptr::null;
 use crate::stack::Token;
 use crate::stack::ParserError;
 use crate::stack::Stack;
 
-pub fn tokenize(words: &[&str]) -> Stack {
+pub fn tokenize(words: &[&str]) -> Result<Stack, ParserError> {
     let mut tokens = Vec::new();
     let mut index = 0;
 
-
-    let mut test = 4;
-
     while index < words.len() {
         let token = match words[index] {
-            "[" => make_collection(&mut index, words, Token::List(vec![])).unwrap(),
-            "{" => make_collection(&mut index, words, Token::Block(vec![])).unwrap(),
-            "\"" => make_string(&mut index, words).unwrap(),
+            "[" => make_collection(&mut index, words, Token::List(vec![]))?,
+            "{" => make_collection(&mut index, words, Token::Block(vec![]))?,
+            "\"" => make_string(&mut index, words)?,
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
             s if is_integer(s) => Token::Int(s.parse::<i64>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
@@ -28,7 +23,7 @@ pub fn tokenize(words: &[&str]) -> Stack {
     }
 
 
-    Stack{tokens}
+    Ok(Stack{tokens})
 }
 
 pub fn lex(input: &str) -> Vec<&str> {
@@ -55,11 +50,11 @@ fn is_bool(s: &str) -> bool {
 }
 
 fn is_function(s: &str) -> bool {
-    let arithmatic = vec!["+", "-", "*", "/", "div"];
+    let arithmetic = vec!["+", "-", "*", "/", "div"];
     let logical = vec!["<", ">", "==", "&&", "||", "not"];
     let list = vec!["head", "tail", "empty", "length", "cons", "append", "each", "map", "foldl"];
     // TODO: Control flow?
-    arithmatic.contains(&s) || logical.contains(&s) || list.contains(&s)
+    arithmetic.contains(&s) || logical.contains(&s) || list.contains(&s)
 }
 
 fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token, ParserError> {
@@ -81,8 +76,8 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token,
         }
     }
     match (t, level) {
-        (Token::List(_), 0)  => Ok(Token::List(tokenize(&words[start_index..*index]).tokens)),
-        (Token::Block(_), 0) => Ok(Token::Block(tokenize(&words[start_index..*index]).tokens)),
+        (Token::List(_), 0)  => Ok(Token::List(tokenize(&words[start_index..*index])?.tokens)),
+        (Token::Block(_), 0) => Ok(Token::Block(tokenize(&words[start_index..*index])?.tokens)),
         (Token::List(_), _)  => Err(ParserError::IncompleteList),
         (Token::Block(_), _) => Err(ParserError::IncompleteQuotation),
         _ => panic!("Incorrect Token Type given to function")
@@ -100,5 +95,9 @@ fn make_string(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> 
         }
         *index += 1;
     }
-    Ok(Token::String(result_string))
+    if *index < words.len() {
+        Ok(Token::String(result_string))
+    } else {
+        Err(ParserError::IncompleteString)
+    }
 }

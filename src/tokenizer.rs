@@ -11,6 +11,8 @@ pub fn tokenize(words: &[&str]) -> Result<Stack, ParserError> {
             "[" => make_collection(&mut index, words, Token::List(vec![]))?,
             "{" => make_collection(&mut index, words, Token::Block(vec![]))?,
             "\"" => make_string(&mut index, words)?,
+            "]" => Err(ParserError::IncompleteList)?,
+            "}" => Err(ParserError::IncompleteList)?,
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
             s if is_integer(s) => Token::Int(s.parse::<i64>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),

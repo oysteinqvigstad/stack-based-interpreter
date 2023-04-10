@@ -8,7 +8,7 @@ mod interpreter;
 mod tokenizer;
 
 fn main() {
-    let res = tokenize(lex("-5 \" Hello there ! \" + false 5.501  [ 5 + 52 ] 2.5 3 ").as_slice());
+    let res = tokenize(lex("-5 \" Hello there ! \" + false 5.501 [ 5 + [ 52 ] ] 2.5 3 ").as_slice());
     match res {
         Ok(x) => println!("{:?}", x.tokens),
         Err(x) => println!("{:?}", x)

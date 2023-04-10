@@ -15,6 +15,16 @@ pub struct Stack {
     pub(crate) tokens: Vec<Token>
 }
 
+#[derive(Debug)]
+pub enum ParserError {
+    IncompleteString,
+    IncompleteList,
+    IncompleteQuotation
+}
+
+
+
+
 // impl Stack {
 //
 // }

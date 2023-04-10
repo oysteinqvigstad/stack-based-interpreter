@@ -1,16 +1,22 @@
+use std::fs::copy;
+use std::ptr::null;
 use crate::stack::Token;
+use crate::stack::Stack;
+use crate::stack::Token::List;
+use crate::stack::Token::Block;
+use crate::stack::Token::String;
 
-pub fn tokenize(input: &str) -> Vec<Token> {
+pub fn tokenize(words: &[&str]) -> Stack {
     let mut tokens = Vec::new();
     let mut index = 0;
 
-    let words = lex(input);
 
-    println!("{}", is_function(&"+".to_string()));
+    let mut test = 4;
 
     while index < words.len() {
         let token = match words[index] {
-
+            "[" => make_collection(&mut index, words, List(vec![])),
+            "{" => make_collection(&mut index, words, Block(vec![])),
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
             s if is_integer(s) => Token::Int(s.parse::<i64>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
@@ -22,12 +28,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     }
 
 
-    println!("{:?}", tokens);
-
-    vec![]
+    Stack{tokens}
 }
 
-fn lex(input: &str) -> Vec<&str> {
+pub fn lex(input: &str) -> Vec<&str> {
     input.split_whitespace().collect()
 }
 
@@ -51,6 +55,95 @@ fn is_bool(s: &str) -> bool {
 }
 
 fn is_function(s: &str) -> bool {
-    let ops = vec!["+", "-", "/", "*"];
-    ops.contains(&s)
+    let arithmatic = vec!["+", "-", "*", "/", "div"];
+    let logical = vec!["<", ">", "==", "&&", "||", "not"];
+    let list = vec!["head", "tail", "empty", "length", "cons", "append", "each", "map", "foldl"];
+    // TODO: Control flow?
+    arithmatic.contains(&s) || logical.contains(&s) || list.contains(&s)
 }
+
+fn make_list(index: &mut usize, words: &[&str]) -> Token {
+    let list: Vec<Token> = Vec::new();
+    let mut list_level = 0;
+    let start_index = *index + 1;
+    while *index < words.len() {
+        list_level += match words[*index] {
+            "[" =>  1,
+            "]" => -1,
+            _   =>  0
+        };
+
+        if list_level == 0 {
+            break;
+        }
+
+        *index += 1;
+    }
+    if list_level != 0 {
+        panic!("unmatching braces");
+    }
+    Token::List(tokenize(&words[start_index..*index]).tokens)
+
+}
+
+fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Token {
+    let mut level = 0;
+    let start_index = *index + 1;
+    while *index < words.len() {
+        level += match (&t, words[*index]) {
+            (Token::List(_),  "[") =>  1,
+            (Token::List(_),  "]") => -1,
+            (Token::Block(_), "{") =>  1,
+            (Token::Block(_), "}") => -1,
+            _                      =>  0,
+        };
+
+        if level == 0 {
+            break;
+        } else {
+            *index += 1;
+        }
+    }
+    if level != 0 {
+        panic!("unmatching braces");
+    }
+
+
+    match t {
+        List(_) => Token::List(tokenize(&words[start_index..*index]).tokens),
+        Block(_) => Token::Block(tokenize(&words[start_index..*index]).tokens),
+        _ => Token::Block(tokenize(&words[start_index..*index]).tokens),
+    }
+}
+
+    // while *index < words.len() {
+    //     match t {
+    //         List(_) => level += match words[*index] {
+    //                                         "[" =>  1,
+    //                                         "]" => -1,
+    //                                         _   =>  0
+    //                                 },
+    //         Block(_) => level += match words[*index] {
+    //             "{" =>  1,
+    //             "}" => -1,
+    //             _   =>  0
+    //         },
+    //         _ => panic!("should not have been invocated")
+    //     }
+    //
+    //     if level == 0 {
+    //         break;
+    //     }
+    //
+    //     *index += 1;
+    // }
+    // if level != 0 {
+    //     panic!("unmatching braces");
+    // }
+    // println!("{}", *index);
+    // match t {
+    //     List(_) => Token::List(tokenize(&words[start_index..*index]).tokens),
+    //     Block(_) => Token::Block(tokenize(&words[start_index..*index]).tokens),
+    //     _ => panic!("should not have been invocated")
+    // }
+// }

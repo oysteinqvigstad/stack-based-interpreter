@@ -1,10 +1,8 @@
 use std::fs::copy;
 use std::ptr::null;
 use crate::stack::Token;
+use crate::stack::ParserError;
 use crate::stack::Stack;
-use crate::stack::Token::List;
-use crate::stack::Token::Block;
-use crate::stack::Token::String;
 
 pub fn tokenize(words: &[&str]) -> Stack {
     let mut tokens = Vec::new();
@@ -15,13 +13,15 @@ pub fn tokenize(words: &[&str]) -> Stack {
 
     while index < words.len() {
         let token = match words[index] {
-            "[" => make_collection(&mut index, words, List(vec![])),
-            "{" => make_collection(&mut index, words, Block(vec![])),
+            "[" => make_collection(&mut index, words, Token::List(vec![])).unwrap(),
+            "{" => make_collection(&mut index, words, Token::Block(vec![])).unwrap(),
+            "\"" => make_string(&mut index, words).unwrap(),
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
             s if is_integer(s) => Token::Int(s.parse::<i64>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
             s if is_function(s) => Token::Operation(s.to_string()),
             s => Token::String(s.to_string())
+
         };
         tokens.push(token);
         index += 1;
@@ -62,31 +62,7 @@ fn is_function(s: &str) -> bool {
     arithmatic.contains(&s) || logical.contains(&s) || list.contains(&s)
 }
 
-fn make_list(index: &mut usize, words: &[&str]) -> Token {
-    let list: Vec<Token> = Vec::new();
-    let mut list_level = 0;
-    let start_index = *index + 1;
-    while *index < words.len() {
-        list_level += match words[*index] {
-            "[" =>  1,
-            "]" => -1,
-            _   =>  0
-        };
-
-        if list_level == 0 {
-            break;
-        }
-
-        *index += 1;
-    }
-    if list_level != 0 {
-        panic!("unmatching braces");
-    }
-    Token::List(tokenize(&words[start_index..*index]).tokens)
-
-}
-
-fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Token {
+fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token, ParserError> {
     let mut level = 0;
     let start_index = *index + 1;
     while *index < words.len() {
@@ -104,46 +80,25 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Token {
             *index += 1;
         }
     }
-    if level != 0 {
-        panic!("unmatching braces");
-    }
-
-
-    match t {
-        List(_) => Token::List(tokenize(&words[start_index..*index]).tokens),
-        Block(_) => Token::Block(tokenize(&words[start_index..*index]).tokens),
-        _ => Token::Block(tokenize(&words[start_index..*index]).tokens),
+    match (t, level) {
+        (Token::List(_), 0)  => Ok(Token::List(tokenize(&words[start_index..*index]).tokens)),
+        (Token::Block(_), 0) => Ok(Token::Block(tokenize(&words[start_index..*index]).tokens)),
+        (Token::List(_), _)  => Err(ParserError::IncompleteList),
+        (Token::Block(_), _) => Err(ParserError::IncompleteQuotation),
+        _ => panic!("Incorrect Token Type given to function")
     }
 }
 
-    // while *index < words.len() {
-    //     match t {
-    //         List(_) => level += match words[*index] {
-    //                                         "[" =>  1,
-    //                                         "]" => -1,
-    //                                         _   =>  0
-    //                                 },
-    //         Block(_) => level += match words[*index] {
-    //             "{" =>  1,
-    //             "}" => -1,
-    //             _   =>  0
-    //         },
-    //         _ => panic!("should not have been invocated")
-    //     }
-    //
-    //     if level == 0 {
-    //         break;
-    //     }
-    //
-    //     *index += 1;
-    // }
-    // if level != 0 {
-    //     panic!("unmatching braces");
-    // }
-    // println!("{}", *index);
-    // match t {
-    //     List(_) => Token::List(tokenize(&words[start_index..*index]).tokens),
-    //     Block(_) => Token::Block(tokenize(&words[start_index..*index]).tokens),
-    //     _ => panic!("should not have been invocated")
-    // }
-// }
+fn make_string(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
+    *index += 1;
+    let mut result_string = String::new();
+    while *index < words.len() && words[*index] != "\"" {
+        if result_string.is_empty() {
+            result_string = words[*index].to_string();
+        } else {
+            result_string = vec![result_string, words[*index].to_string()].join(" ");
+        }
+        *index += 1;
+    }
+    Ok(Token::String(result_string))
+}

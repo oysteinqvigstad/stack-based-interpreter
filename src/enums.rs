@@ -24,7 +24,7 @@ pub enum ParserError {
     IncompleteQuotation
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Token {
     String(String),
     Int(i64),
@@ -78,8 +78,8 @@ impl Div for Token {
         match type_coert(self, other)? {
             (_, Token::Int(0)) => Err(ProgramError::DivisionByZero),
             (_, Token::Float(0.0)) => Err(ProgramError::DivisionByZero),
-            (Token::Int(x), Token::Int(y)) => Ok(Token::Int(x-y)),
-            (Token::Float(x), Token::Float(y)) => Ok(Token::Float(x-y)),
+            (Token::Int(x), Token::Int(y)) => Ok(Token::Int(x/y)),
+            (Token::Float(x), Token::Float(y)) => Ok(Token::Float(x/y)),
             _ => Err(ProgramError::NumberConversionError)
         }
     }

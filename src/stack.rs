@@ -16,4 +16,8 @@ impl Stack {
             None => Err(ProgramError::StackEmpty)
         }
     }
+
+    pub fn len(&mut self) -> usize {
+        self.tokens.len()
+    }
 }

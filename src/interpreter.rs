@@ -2,11 +2,14 @@ use crate::stack::Stack;
 use crate::enums;
 use crate::enums::{ProgramError, Token};
 
-// pub fn execute(stack: &mut Stack) -> Stack {
-//    return Stack{tokens: vec![]}
-// }
-
-
+pub fn execute(stack: &mut Stack) -> Result<Token, ProgramError> {
+    let result = exec(stack)?;
+    match stack.len() {
+        0 => Err(ProgramError::StackEmpty),
+        1 => Ok(result),
+        _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
+    }
+}
 
 
 pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
@@ -24,17 +27,21 @@ pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
 
 fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramError> {
     match &token {
-        Token::Operation(s) => match s.as_str() {
-            "+" => exec_binary_op(stack, "+"),
-            "-" => exec_binary_op(stack, "-"),
-            "*" => exec_binary_op(stack, "*"),
-            "/" => exec_binary_op(stack, "/"),
-            _ => Err(ProgramError::UnknownSymbol)
+        Token::Operation(s) => {
+            let result = match s.as_str() {
+                "+" => exec_binary_op(stack, "+")?,
+                "-" => exec_binary_op(stack, "-")?,
+                "*" => exec_binary_op(stack, "*")?,
+                "/" => exec_binary_op(stack, "/")?,
+                _ => Err(ProgramError::UnknownSymbol)?
+            };
+            if stack.len() == 0 {
+                stack.push(result.clone());
+            }
+            Ok(result)
         },
         _ => panic!("Non-operation cannot be executed")
-
     }
-
 }
 
 

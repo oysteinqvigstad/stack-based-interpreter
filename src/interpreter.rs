@@ -31,14 +31,19 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
     match &token {
         Token::Operation(s) => {
             let result = match s.as_str() {
+                // arithmetic
                 "+" => exec_binary_op(stack, "+")?,
                 "-" => exec_binary_op(stack, "-")?,
                 "*" => exec_binary_op(stack, "*")?,
                 "/" => exec_binary_op(stack, "/")?,
                 "div" => exec_binary_op(stack, "div")?,
+                //logical
                 "<" => exec_binary_op(stack, "<")?,
                 ">" => exec_binary_op(stack, ">")?,
                 "==" => exec_binary_op(stack, "==")?,
+                "not" => exec_unary_op(stack, "not")?,
+                "&&" => exec_binary_op(stack, "&&")?,
+                "||" => exec_binary_op(stack, "||")?,
                 _ => Err(ProgramError::UnknownSymbol)?
             };
             if stack.len() == 0 {
@@ -63,14 +68,17 @@ fn exec_binary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
         "<" => left.lt(right),
         ">" => left.gt(right),
         "==" => left.eq(right),
+        "&&" => left.and(right),
+        "||" => left.or(right),
         _ => Err(ProgramError::UnknownSymbol)
     }
 }
 
-fn type_coert(left: Token, right: Token) -> Result<(Token, Token), ProgramError> {
-    match (left, right) {
-        (Token::Int(x), Token::Float(y)) => Ok((Token::Float(x as f32), Token::Float(y))),
-        (Token::Float(x), Token::Int(y)) => Ok((Token::Float(x), Token::Float(y as f32))),
-        _ => Err(ProgramError::NumberConversionError)
+fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
+    let left = exec(stack)?;
+    match op {
+        "not" => left.not(),
+        _ => Err(ProgramError::UnknownSymbol)
     }
 }
+

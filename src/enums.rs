@@ -123,6 +123,26 @@ impl Token {
         }
     }
 
+    pub fn not(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::Bool(x) => Ok(Token::Bool(!x)),
+            _ => Err(ProgramError::ExpectedBool)
+        }
+    }
+
+    pub fn and(self, other: Token) -> Result<Token, ProgramError> {
+        match (self, other) {
+            (Token::Bool(x), Token::Bool(y)) => Ok(Token::Bool(x && y)),
+            (_, _) => Err(ProgramError::ExpectedBool)
+        }
+    }
+
+    pub fn or(self, other: Token) -> Result<Token, ProgramError> {
+        match (self, other) {
+            (Token::Bool(x), Token::Bool(y)) => Ok(Token::Bool(x || y)),
+            (_, _) => Err(ProgramError::ExpectedBool)
+        }
+    }
 }
 
 fn type_coert(left: Token, right: Token) -> Result<(Token, Token), ProgramError> {

@@ -1,9 +1,15 @@
-use crate::stack::Token;
-use crate::stack::ParserError;
+use crate::enums::Token;
+use crate::enums::ParserError;
 use crate::stack::Stack;
 
+
+
+pub fn parse(s: &str) -> Result<Stack, ParserError> {
+    tokenize_and_parse(&lex(s))
+}
+
 // tokenize breaks down a string into a Stack of tokens
-pub fn tokenize(words: &[&str]) -> Result<Stack, ParserError> {
+pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
     let mut tokens = Vec::new();
     let mut index = 0;
 
@@ -13,7 +19,7 @@ pub fn tokenize(words: &[&str]) -> Result<Stack, ParserError> {
             "{" => make_collection(&mut index, words, Token::Block(vec![]))?,
             "\"" => make_string(&mut index, words)?,
             "]" => Err(ParserError::IncompleteList)?,
-            "}" => Err(ParserError::IncompleteList)?,
+            "}" => Err(ParserError::IncompleteQuotation)?,
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
             s if is_integer(s) => Token::Int(s.parse::<i64>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
@@ -29,8 +35,11 @@ pub fn tokenize(words: &[&str]) -> Result<Stack, ParserError> {
     Ok(Stack{tokens})
 }
 
-pub fn lex(input: &str) -> Vec<&str> {
-    input.split_whitespace().collect()
+pub fn lex(input: &str) -> Box<[&str]> {
+    let vec: Vec<&str> = input.split_whitespace().collect();
+    vec.into_boxed_slice()
+    // let vec: Vec<&str> = input.split_whitespace().collect::<Vec<&str>>();
+    // slice
 }
 
 // is_integer checks if the token is an integer. Also checks for negative numbers
@@ -84,8 +93,8 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token,
         }
     }
     match (t, level) {
-        (Token::List(_), 0)  => Ok(Token::List(tokenize(&words[start_index..*index])?.tokens)),
-        (Token::Block(_), 0) => Ok(Token::Block(tokenize(&words[start_index..*index])?.tokens)),
+        (Token::List(_), 0)  => Ok(Token::List(tokenize_and_parse(&words[start_index..*index])?.tokens)),
+        (Token::Block(_), 0) => Ok(Token::Block(tokenize_and_parse(&words[start_index..*index])?.tokens)),
         (Token::List(_), _)  => Err(ParserError::IncompleteList),
         (Token::Block(_), _) => Err(ParserError::IncompleteQuotation),
         _ => panic!("Incorrect Token Type given to function")

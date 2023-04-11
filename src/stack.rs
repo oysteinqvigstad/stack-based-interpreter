@@ -6,11 +6,11 @@ pub struct Stack {
 }
 
 impl Stack {
-    fn push(&mut self, token: Token) {
+    pub fn push(&mut self, token: Token) {
         self.tokens.push(token)
     }
 
-    fn pop(&mut self) -> Result<Token, ProgramError> {
+    pub fn pop(&mut self) -> Result<Token, ProgramError> {
         match self.tokens.pop() {
             Some(x) => Ok(x),
             None => Err(ProgramError::StackEmpty)

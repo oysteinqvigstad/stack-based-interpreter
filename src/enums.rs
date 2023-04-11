@@ -85,6 +85,45 @@ impl Div for Token {
     }
 }
 
+impl Token {
+    pub fn int_div(self, other: Token) -> Result<Token, ProgramError> {
+        match type_coert(self, other)? {
+            (_, Token::Int(0)) => Err(ProgramError::DivisionByZero),
+            (_, Token::Float(0.0)) => Err(ProgramError::DivisionByZero),
+            (Token::Int(x), Token::Int(y)) => Ok(Token::Int(x/y)),
+            (Token::Float(x), Token::Float(y)) => Ok(Token::Int((x/y) as i64)),
+            _ => Err(ProgramError::NumberConversionError)
+        }
+    }
+
+    pub fn lt(self, other: Token) -> Result<Token, ProgramError> {
+        match type_coert(self, other)? {
+            (Token::Int(x), Token::Int(y)) => Ok(Token::Bool(x < y)),
+            (Token::Float(x), Token::Float(y)) => Ok(Token::Bool(x < y)),
+            (Token::Bool(x), Token::Bool(y)) => Ok(Token::Bool(x < y)),
+            _ => Err(ProgramError::ExpectedBoolOrNumber)
+        }
+    }
+
+    pub fn gt(self, other: Token) -> Result<Token, ProgramError> {
+        match type_coert(self, other)? {
+            (Token::Int(x), Token::Int(y)) => Ok(Token::Bool(x > y)),
+            (Token::Float(x), Token::Float(y)) => Ok(Token::Bool(x > y)),
+            (Token::Bool(x), Token::Bool(y)) => Ok(Token::Bool(x > y)),
+            _ => Err(ProgramError::ExpectedBoolOrNumber)
+        }
+    }
+
+    pub fn eq(self, other: Token) -> Result<Token, ProgramError> {
+        match type_coert(self, other)? {
+            (Token::Int(x), Token::Int(y)) => Ok(Token::Bool(x == y)),
+            (Token::Float(x), Token::Float(y)) => Ok(Token::Bool(x == y)),
+            (Token::Bool(x), Token::Bool(y)) => Ok(Token::Bool(x == y)),
+            _ => Err(ProgramError::ExpectedBoolOrNumber)
+        }
+    }
+
+}
 
 fn type_coert(left: Token, right: Token) -> Result<(Token, Token), ProgramError> {
     if discriminant(&left) == discriminant(&right) {

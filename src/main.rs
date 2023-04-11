@@ -9,7 +9,7 @@ mod parser;
 mod enums;
 
 fn main() {
-    let mut res = parse("1 1 + 2 2 + *");
+    let mut res = parse("True False ==");
     // println!("{:?}", Token::Float(10.0) / Token::Int(1));
     match res {
         Ok(x) => {

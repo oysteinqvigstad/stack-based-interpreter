@@ -1,3 +1,4 @@
+use std::ops::Div;
 use crate::stack::Stack;
 use crate::enums;
 use crate::enums::{ProgramError, Token};
@@ -14,13 +15,14 @@ pub fn execute(stack: &mut Stack) -> Result<Token, ProgramError> {
 
 pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
     match stack.pop() {
-        Err(_) => panic!("Test"),
+        Err(_) => Err(ProgramError::StackEmpty),
         Ok(t) =>
             match t {
                 Token::Float(_) => Ok(t),
                 Token::Int(_) => Ok(t),
+                Token::Bool(_) => Ok(t),
                 Token::Operation(_) => evaluate_operation(stack, t),
-                _ => panic!("test")
+                _ => Err(ProgramError::UnknownSymbol)
             }
     }
 }
@@ -33,6 +35,10 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
                 "-" => exec_binary_op(stack, "-")?,
                 "*" => exec_binary_op(stack, "*")?,
                 "/" => exec_binary_op(stack, "/")?,
+                "div" => exec_binary_op(stack, "div")?,
+                "<" => exec_binary_op(stack, "<")?,
+                ">" => exec_binary_op(stack, ">")?,
+                "==" => exec_binary_op(stack, "==")?,
                 _ => Err(ProgramError::UnknownSymbol)?
             };
             if stack.len() == 0 {
@@ -53,13 +59,12 @@ fn exec_binary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
         "-" => left - right,
         "*" => left * right,
         "/" => left / right,
+        "div" => left.int_div(right),
+        "<" => left.lt(right),
+        ">" => left.gt(right),
+        "==" => left.eq(right),
         _ => Err(ProgramError::UnknownSymbol)
     }
-}
-
-fn op_arithmetic(op: &str) -> Result<Token, ProgramError> {
-
-   Err(ProgramError::UnknownSymbol)
 }
 
 fn type_coert(left: Token, right: Token) -> Result<(Token, Token), ProgramError> {

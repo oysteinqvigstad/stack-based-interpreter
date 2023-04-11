@@ -1,9 +1,20 @@
+use std::fmt;
 use crate::enums::{ProgramError, Token};
 
 #[derive(Debug)]
 pub struct Stack {
     pub(crate) tokens: Vec<Token>
 }
+
+
+impl fmt::Display for Stack {
+   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+       write!(f, "{}", self.tokens.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "))
+   }
+}
+
+
+
 
 impl Stack {
     pub fn push(&mut self, token: Token) {
@@ -20,4 +31,5 @@ impl Stack {
     pub fn len(&mut self) -> usize {
         self.tokens.len()
     }
+
 }

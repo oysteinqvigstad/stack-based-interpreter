@@ -1,3 +1,5 @@
+use std::fmt;
+use std::fmt::Formatter;
 use std::mem::discriminant;
 use std::ops::{Add, Sub, Mul, Div};
 
@@ -34,6 +36,22 @@ pub enum Token {
     Block(Vec<Token>),
     Operation(String)
 }
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Token::String(x) => write!(f, "\"{}\"", x),
+            Token::Int(x) => write!(f, "{}", x),
+            Token::Float(x) => write!(f, "{}", x),
+            Token::Bool(x) => write!(f, "{}", if *x {"True"} else {"False"}),
+            Token::List(x) => write!(f, "[{}]", x.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(",")),
+            Token::Block(x) => write!(f, "{{{}}}", x.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" ")),
+            Token::Operation(x) => write!(f, "{}", x),
+            _ => write!(f, "")
+        }
+    }
+}
+
 
 
 

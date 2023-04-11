@@ -1,14 +1,12 @@
-pub mod parser;
 mod stack;
-use parser::parse;
-use crate::tokenizer::tokenize;
-use crate::tokenizer::lex;
+use crate::parser::parse;
 
 mod interpreter;
-mod tokenizer;
+mod parser;
+mod enums;
 
 fn main() {
-    let res = tokenize(lex("-5 \" Hello there ! \" + false 5.501 [ 5 + [ 52 ] ] 2.5 3 ").as_slice());
+    let res = parse("-5 43 [ true -42. 42 3 \" Hello \" ] } ");
     match res {
         Ok(x) => println!("{:?}", x.tokens),
         Err(x) => println!("{:?}", x)

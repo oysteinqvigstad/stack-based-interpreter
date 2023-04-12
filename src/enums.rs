@@ -4,7 +4,9 @@ use std::io::Read;
 use std::iter::once;
 use std::mem::discriminant;
 use std::ops::{Add, Sub, Mul, Div};
+use crate::execute;
 use crate::parser::{lex};
+use crate::stack::Stack;
 
 
 #[derive(Debug)]
@@ -38,7 +40,7 @@ pub enum Token {
     Bool(bool),
     List(Vec<Token>),
     Block(Vec<Token>),
-    Operation(String)
+    Operation(String),
 }
 
 impl fmt::Display for Token {
@@ -245,6 +247,31 @@ impl Token {
         match (self, other) {
             (Token::List(x), Token::List(y)) => Ok(Token::List(x.into_iter().chain(y.into_iter()).collect())),
             _ => Err(ProgramError::ExpectedList)
+        }
+    }
+
+    pub fn exec(self: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+        match self {
+            Token::Block(x) => {
+                stack.tokens.extend(x);
+                crate::interpreter::exec(stack)
+            },
+            _ => Err(ProgramError::ExpectedQuotation)
+        }
+    }
+
+
+    pub fn if_exp(self, left: Token, right: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+        match (self, left, right) {
+            (Token::Bool(true), Token::Block(y), Token::Block(z)) => {
+                stack.tokens.extend(y);
+                crate::interpreter::exec(stack)
+            },
+            (Token::Bool(false), Token::Block(y), Token::Block(z)) => {
+                stack.tokens.extend(z);
+                crate::interpreter::exec(stack)
+            },
+            _ => Err(ProgramError::ExpectedBool)
         }
     }
 

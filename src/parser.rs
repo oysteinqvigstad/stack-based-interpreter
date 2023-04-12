@@ -1,4 +1,4 @@
-use crate::enums::Token;
+use crate::enums::{ProgramError, Token};
 use crate::enums::ParserError;
 use crate::stack::Stack;
 
@@ -7,30 +7,38 @@ use crate::stack::Stack;
 
 // tokenize breaks down a string into a Stack of tokens
 pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
-    let mut tokens = Vec::new();
-    let mut index = 0;
+    let mut stack: Vec<Token> = Vec::new();
+    let mut index: usize = 0;
 
     while index < words.len() {
-        let token = match words[index] {
-            "[" => make_collection(&mut index, words, Token::List(vec![]))?,
-            "{" => make_collection(&mut index, words, Token::Block(vec![]))?,
-            "\"" => make_string(&mut index, words)?,
-            "]" => Err(ParserError::IncompleteList)?,
-            "}" => Err(ParserError::IncompleteQuotation)?,
-            s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
-            s if is_integer(s) => Token::Int(s.parse::<i128>().unwrap()),
-            s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
-            // s if is_function(s) => Token::Operation(s.to_string()),
-            s => Token::Operation(s.to_string())
-
-        };
-        tokens.push(token);
+        let token = get_token(&mut index, words, &mut stack)?;
+        stack.push(token);
         index += 1;
     }
 
 
-    Ok(Stack{tokens})
+    Ok(Stack{ tokens: stack })
 }
+
+pub fn get_token(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> Result<Token, ParserError> {
+    match words[index.clone()] {
+        "[" => make_collection(index, words, Token::List(vec![])),
+        "{" => make_collection(index, words, Token::Block(vec![])),
+        "\"" => make_string(index, words),
+        "]" => Err(ParserError::IncompleteList),
+        "}" => Err(ParserError::IncompleteQuotation),
+        "if" => make_if_expression(index, words, stack),
+        s if is_bool(s) => Ok(Token::Bool(s.to_lowercase().parse::<bool>().unwrap())),
+        s if is_integer(s) => Ok(Token::Int(s.parse::<i128>().unwrap())),
+        s if is_float(s) => Ok(Token::Float(s.parse::<f32>().unwrap())),
+        s => Ok(Token::Operation(s.to_string()))
+    }
+}
+
+
+
+
+
 
 pub fn lex(input: &str) -> Box<[&str]> {
     let vec: Vec<&str> = input.split_whitespace().collect();
@@ -57,18 +65,7 @@ fn is_bool(s: &str) -> bool {
     s == "true" || s == "True" || s == "false" || s == "False"
 }
 
-// is_function checks if the token is a function that reads other tokens
-// fn is_function(s: &str) -> bool {
-//     let arithmetic = vec!["+", "-", "*", "/", "div"];
-//     let logical = vec!["<", ">", "==", "&&", "||", "not"];
-//     let list = vec!["head", "tail", "empty", "length", "cons", "append", "each", "map", "foldl"];
-//     TODO: Control flow?
-    // arithmetic.contains(&s) || logical.contains(&s) || list.contains(&s)
-// }
 
-// make_collection ensures that everything between [] or {} is parsed as token that holds
-// a vector of other tokens. The function can also construct nested lists/blocks. If a
-// list/block is not closed then the function will return an error.
 fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token, ParserError> {
     let mut level = 0;
     let start_index = *index + 1;
@@ -114,4 +111,19 @@ fn make_string(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> 
     } else {
         Err(ParserError::IncompleteString)
     }
+}
+
+
+fn make_if_expression(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> Result<Token, ParserError> {
+    *index += 1;
+    for _ in 0..2 {
+        let token = match get_token(index, words, stack)? {
+            Token::Block(x) => Token::Block(x),
+            x => Token::Block(vec![x])
+        };
+        *index += 1;
+        stack.push(token);
+    }
+    Ok(Token::Operation("if".to_string()))
+
 }

@@ -18,6 +18,7 @@ pub fn parse(s: &str) -> Result<Stack, ParserError> {
 
 pub fn execute(stack: &mut Stack) -> Result<Token, ProgramError> {
     let result = exec(stack)?;
+    println!("{:?}", result);
     match stack.len() {
         0 => Ok(result),
         _ => Err(ProgramError::ProgramFinishedWithMultipleValues)

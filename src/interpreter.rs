@@ -17,7 +17,6 @@ pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
                 Token::List(_) => Ok(t),
                 Token::Block(_) => Ok(t),
                 Token::Operation(_) => evaluate_operation(stack, t),
-                _ => Err(ProgramError::UnknownSymbol)
             }
     }
 }
@@ -51,6 +50,8 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
                 "tail" => exec_unary_op(stack, "tail")?,
                 "cons" => exec_binary_op(stack, "cons")?,
                 "append" => exec_binary_op(stack, "append")?,
+                "exec" => exec_unary_op(stack, "exec")?,
+                "if" => exec_ternary_op(stack, "if")?,
                 _ => Err(ProgramError::UnknownSymbol)?
             };
             Ok(result)
@@ -101,6 +102,17 @@ fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
         "empty" => left.empty(),
         "head" => left.head(),
         "tail" => left.tail(),
+        "exec" => left.exec(stack),
             _ => Err(ProgramError::UnknownSymbol)
+    }
+}
+
+fn exec_ternary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
+    let right = exec(stack)?;
+    let middle = exec(stack)?;
+    let left = exec(stack)?;
+    match op {
+        "if" => left.if_exp(middle, right, stack),
+        _ => Err(ProgramError::UnknownSymbol)
     }
 }

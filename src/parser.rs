@@ -20,8 +20,8 @@ pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
             s if is_integer(s) => Token::Int(s.parse::<i128>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
-            s if is_function(s) => Token::Operation(s.to_string()),
-            s => Token::String(s.to_string())
+            // s if is_function(s) => Token::Operation(s.to_string()),
+            s => Token::Operation(s.to_string())
 
         };
         tokens.push(token);
@@ -35,8 +35,6 @@ pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
 pub fn lex(input: &str) -> Box<[&str]> {
     let vec: Vec<&str> = input.split_whitespace().collect();
     vec.into_boxed_slice()
-    // let vec: Vec<&str> = input.split_whitespace().collect::<Vec<&str>>();
-    // slice
 }
 
 // is_integer checks if the token is an integer. Also checks for negative numbers
@@ -60,13 +58,13 @@ fn is_bool(s: &str) -> bool {
 }
 
 // is_function checks if the token is a function that reads other tokens
-fn is_function(s: &str) -> bool {
-    let arithmetic = vec!["+", "-", "*", "/", "div"];
-    let logical = vec!["<", ">", "==", "&&", "||", "not"];
-    let list = vec!["head", "tail", "empty", "length", "cons", "append", "each", "map", "foldl"];
-    // TODO: Control flow?
-    arithmetic.contains(&s) || logical.contains(&s) || list.contains(&s)
-}
+// fn is_function(s: &str) -> bool {
+//     let arithmetic = vec!["+", "-", "*", "/", "div"];
+//     let logical = vec!["<", ">", "==", "&&", "||", "not"];
+//     let list = vec!["head", "tail", "empty", "length", "cons", "append", "each", "map", "foldl"];
+//     TODO: Control flow?
+    // arithmetic.contains(&s) || logical.contains(&s) || list.contains(&s)
+// }
 
 // make_collection ensures that everything between [] or {} is parsed as token that holds
 // a vector of other tokens. The function can also construct nested lists/blocks. If a

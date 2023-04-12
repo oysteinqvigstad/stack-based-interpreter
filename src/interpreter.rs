@@ -3,14 +3,6 @@ use crate::stack::Stack;
 use crate::enums;
 use crate::enums::{ProgramError, Token};
 
-pub fn execute(stack: &mut Stack) -> Result<Token, ProgramError> {
-    let result = exec(stack)?;
-    match stack.len() {
-        0 => Err(ProgramError::StackEmpty),
-        1 => Ok(result),
-        _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
-    }
-}
 
 
 pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {

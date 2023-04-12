@@ -4,9 +4,6 @@ use crate::stack::Stack;
 
 
 
-pub fn parse(s: &str) -> Result<Stack, ParserError> {
-    tokenize_and_parse(&lex(s))
-}
 
 // tokenize breaks down a string into a Stack of tokens
 pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
@@ -21,7 +18,7 @@ pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
             "]" => Err(ParserError::IncompleteList)?,
             "}" => Err(ParserError::IncompleteQuotation)?,
             s if is_bool(s) => Token::Bool(s.to_lowercase().parse::<bool>().unwrap()),
-            s if is_integer(s) => Token::Int(s.parse::<i64>().unwrap()),
+            s if is_integer(s) => Token::Int(s.parse::<i128>().unwrap()),
             s if is_float(s) => Token::Float(s.parse::<f32>().unwrap()),
             s if is_function(s) => Token::Operation(s.to_string()),
             s => Token::String(s.to_string())

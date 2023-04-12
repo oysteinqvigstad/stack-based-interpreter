@@ -1,7 +1,10 @@
 use std::fmt;
 use std::fmt::Formatter;
+use std::io::Read;
+use std::iter::once;
 use std::mem::discriminant;
 use std::ops::{Add, Sub, Mul, Div};
+use crate::parser::{lex};
 
 
 #[derive(Debug)]
@@ -12,6 +15,7 @@ pub enum ProgramError {
     ExpectedBoolOrNumber,
     ExpectedEnumerable,
     ExpectedQuotation,
+    ExpectedString,
     ExpectedList,
     ExpectedVariable,
     DivisionByZero,
@@ -26,7 +30,7 @@ pub enum ParserError {
     IncompleteQuotation
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     String(String),
     Int(i128),
@@ -138,6 +142,8 @@ impl Token {
             (Token::Int(x), Token::Int(y)) => Ok(Token::Bool(x == y)),
             (Token::Float(x), Token::Float(y)) => Ok(Token::Bool(x == y)),
             (Token::Bool(x), Token::Bool(y)) => Ok(Token::Bool(x == y)),
+            (Token::String(x), Token::String(y)) => Ok(Token::Bool(x == y)),
+            (Token::List(x), Token::List(y)) => Ok(Token::Bool(x == y)),
             _ => Err(ProgramError::ExpectedBoolOrNumber)
         }
     }
@@ -162,6 +168,87 @@ impl Token {
             (_, _) => Err(ProgramError::ExpectedBool)
         }
     }
+
+    pub fn len(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::List(x) => Ok(Token::Int(x.len() as i128)),
+            Token::Block(x) => Ok(Token::Int(x.len() as i128)),
+            Token::String(x) => Ok(Token::Int(x.len() as i128)),
+            _ => Err(ProgramError::ExpectedEnumerable)
+        }
+    }
+
+    pub fn parse_int(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::String(x) => {
+                match x.parse::<i128>() {
+                    Ok(i) => Ok(Token::Int(i)),
+                    Err(_) => Err(ProgramError::NumberConversionError)
+                }
+            },
+            _ => Err(ProgramError::ExpectedString)
+        }
+    }
+
+    pub fn parse_float(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::String(x) => {
+                match x.parse::<f32>() {
+                    Ok(f) => Ok(Token::Float(f)),
+                    Err(_) => Err(ProgramError::NumberConversionError)
+                }
+            },
+            _ => Err(ProgramError::ExpectedString)
+        }
+    }
+
+    pub fn words(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::String(x) => {
+                Ok(Token::List(lex(x.as_str()).iter().map(|s| Token::String(s.to_string())).collect::<Vec<Token>>()))
+            },
+            _ => Err(ProgramError::ExpectedString)
+        }
+    }
+
+    pub fn empty(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::List(x) => Ok(Token::Bool(x.is_empty())),
+            _ => Err(ProgramError::ExpectedList)
+        }
+    }
+
+    pub fn head(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::List(x) => {
+                if !x.is_empty() { Ok(x[0].clone()) } else { Err(ProgramError::ExpectedEnumerable) }
+            }
+            _ => Err(ProgramError::ExpectedList)
+        }
+    }
+
+    pub fn tail(self: Token) -> Result<Token, ProgramError> {
+        match self {
+            Token::List(x) => Ok(Token::List(x.into_iter().skip(1).collect())),
+            _ => Err(ProgramError::ExpectedList)
+        }
+    }
+
+    pub fn cons(self, other: Token) -> Result<Token, ProgramError> {
+        match (self, other) {
+            (Token::List(x), a) => Ok(Token::List(once(a).chain(x).collect())),
+            _ => Err(ProgramError::ExpectedList)
+        }
+    }
+
+    pub fn append(self, other: Token) -> Result<Token, ProgramError> {
+        match (self, other) {
+            (Token::List(x), Token::List(y)) => Ok(Token::List(x.into_iter().chain(y.into_iter()).collect())),
+            _ => Err(ProgramError::ExpectedList)
+        }
+    }
+
+
 }
 
 fn type_coert(left: Token, right: Token) -> Result<(Token, Token), ProgramError> {

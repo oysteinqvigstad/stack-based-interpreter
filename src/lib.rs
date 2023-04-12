@@ -17,13 +17,9 @@ pub fn parse(s: &str) -> Result<Stack, ParserError> {
 
 
 pub fn execute(stack: &mut Stack) -> Result<Token, ProgramError> {
-    if stack.len() == 1 {
-        return stack.pop()
-    }
     let result = exec(stack)?;
     match stack.len() {
-        0 => Err(ProgramError::StackEmpty),
-        1 => Ok(result),
+        0 => Ok(result),
         _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
     }
 }

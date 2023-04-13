@@ -1,57 +1,56 @@
-use std::ops::Div;
 use crate::stack::Stack;
-use crate::enums;
 use crate::enums::{ProgramError, Token};
 
 
 
 pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
+    println!("{:?}", stack);
     match stack.pop() {
         Err(_) => Err(ProgramError::StackEmpty),
         Ok(t) =>
             match t {
-                Token::Float(_) => Ok(t),
-                Token::Int(_) => Ok(t),
-                Token::Bool(_) => Ok(t),
-                Token::String(_) => Ok(t),
-                Token::List(_) => Ok(t),
-                Token::Block(_) => Ok(t),
                 Token::Operation(_) => evaluate_operation(stack, t),
+                _ => Ok(t)
             }
     }
 }
+
 
 fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramError> {
     match &token {
         Token::Operation(s) => {
             let result = match s.as_str() {
                 // arithmetic
-                "+" => exec_binary_op(stack, "+")?,
-                "-" => exec_binary_op(stack, "-")?,
-                "*" => exec_binary_op(stack, "*")?,
-                "/" => exec_binary_op(stack, "/")?,
-                "div" => exec_binary_op(stack, "div")?,
+                "+" => exec_binary_op(stack, "+", true, true)?,
+                "-" => exec_binary_op(stack, "-", true, true)?,
+                "*" => exec_binary_op(stack, "*", true, true)?,
+                "/" => exec_binary_op(stack, "/", true, true)?,
+                "div" => exec_binary_op(stack, "div", true, true)?,
                 //logical
-                "<" => exec_binary_op(stack, "<")?,
-                ">" => exec_binary_op(stack, ">")?,
-                "==" => exec_binary_op(stack, "==")?,
+                "<" => exec_binary_op(stack, "<", true, true)?,
+                ">" => exec_binary_op(stack, ">", true, true)?,
+                "==" => exec_binary_op(stack, "==", true, true)?,
                 "not" => exec_unary_op(stack, "not")?,
-                "&&" => exec_binary_op(stack, "&&")?,
-                "||" => exec_binary_op(stack, "||")?,
+                "&&" => exec_binary_op(stack, "&&", true, true)?,
+                "||" => exec_binary_op(stack, "||", true, true)?,
                 "length" => exec_unary_op(stack, "length")?,
                 "parseInteger" => exec_unary_op(stack, "parseInteger")?,
                 "parseFloat" => exec_unary_op(stack, "parseFloat")?,
-                "pop" => exec_binary_op(stack, "pop")?,
-                "swap" => exec_binary_op(stack, "swap")?,
+                "pop" => exec_binary_op(stack, "pop", true, true)?,
+                "swap" => exec_binary_op(stack, "swap", true, true)?,
                 "dup" => exec_unary_op(stack, "dup")?,
                 "words" => exec_unary_op(stack, "words")?,
                 "empty" => exec_unary_op(stack, "empty")?,
                 "head" => exec_unary_op(stack, "head")?,
                 "tail" => exec_unary_op(stack, "tail")?,
-                "cons" => exec_binary_op(stack, "cons")?,
-                "append" => exec_binary_op(stack, "append")?,
+                "cons" => exec_binary_op(stack, "cons", true, true)?,
+                "append" => exec_binary_op(stack, "append", true, true)?,
                 "exec" => exec_unary_op(stack, "exec")?,
                 "if" => exec_ternary_op(stack, "if")?,
+                "map" => exec_binary_op(stack, "map", true, true)?,
+                "each" => exec_binary_op(stack, "each", true, false)?,
+                "times" => exec_binary_op(stack, "times", true, false)?,
+                "foldl" => exec_ternary_op_as_leaves(stack, "foldl")?,
                 _ => Err(ProgramError::UnknownSymbol)?
             };
             Ok(result)
@@ -61,13 +60,21 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
 }
 
 
-fn exec_binary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
-    let right = exec(stack)?;
-    let left = exec(stack)?;
+// this function that operations can be multiplied as well instead of evaluating whats beneath it
+// `l` and `r` will allow operator recursion if the params are true
+fn exec_binary_op(stack: &mut Stack, op: &str, l: bool, r: bool) -> Result<Token, ProgramError> {
+    let right = match r {
+        true => exec(stack)?,
+        false => stack.pop()?,
+    };
+    let left = match l {
+        true => exec(stack)?,
+        false => stack.pop()?,
+    };
+
     if op == "swap" {
         stack.push(right.clone())
     }
-
     match op {
         "+" => left + right,
         "-" => left - right,
@@ -83,9 +90,15 @@ fn exec_binary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
         "swap" => Ok(left),
         "cons" => right.cons(left),
         "append" => left.append(right),
+        "map" => left.map(right, stack),
+        "times" => left.times(right, stack),
+        "each" => left.each(right, stack),
         _ => Err(ProgramError::UnknownSymbol)
     }
+
 }
+
+
 
 fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
     let left = exec(stack)?;
@@ -113,6 +126,18 @@ fn exec_ternary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
     let left = exec(stack)?;
     match op {
         "if" => left.if_exp(middle, right, stack),
+        // "foldl" => left
+        _ => Err(ProgramError::UnknownSymbol)
+    }
+}
+
+fn exec_ternary_op_as_leaves(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
+    let right = exec(stack)?;
+    let middle = exec(stack)?;
+    let left = exec(stack)?;
+    match op {
+        "if" => left.if_exp(middle, right, stack),
+        // "foldl" => left
         _ => Err(ProgramError::UnknownSymbol)
     }
 }

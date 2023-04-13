@@ -1,4 +1,5 @@
-use crate::enums::{ProgramError, Token};
+use std::sync::atomic::spin_loop_hint;
+use crate::enums::Token;
 use crate::enums::ParserError;
 use crate::stack::Stack;
 
@@ -28,6 +29,10 @@ pub fn get_token(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> R
         "]" => Err(ParserError::IncompleteList),
         "}" => Err(ParserError::IncompleteQuotation),
         "if" => make_if_expression(index, words, stack),
+        "map" => make_binary_infix_to_postfix(index, words, stack),
+        "each" => make_binary_infix_to_postfix(index, words, stack),
+        "times" => make_binary_infix_to_postfix(index, words, stack),
+        "foldl" => make_binary_infix_to_postfix(index, words, stack),
         s if is_bool(s) => Ok(Token::Bool(s.to_lowercase().parse::<bool>().unwrap())),
         s if is_integer(s) => Ok(Token::Int(s.parse::<i128>().unwrap())),
         s if is_float(s) => Ok(Token::Float(s.parse::<f32>().unwrap())),
@@ -126,4 +131,12 @@ fn make_if_expression(index: &mut usize, words: &[&str], stack: &mut Vec<Token>)
     }
     Ok(Token::Operation("if".to_string()))
 
+}
+
+fn make_binary_infix_to_postfix(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> Result<Token, ParserError> {
+    let op = words[*index];
+    *index += 1;
+    let token = get_token(index, words, stack)?;
+    stack.push(token);
+    Ok(Token::Operation(op.to_string()))
 }

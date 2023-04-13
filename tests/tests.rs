@@ -1,5 +1,3 @@
-// use prog2006_assignment_2::t;
-
 mod test_literals {
     use prog2006_assignment_2::t;
 

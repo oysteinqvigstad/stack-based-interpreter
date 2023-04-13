@@ -20,13 +20,11 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
     match &token {
         Token::Operation(s) => {
             let result = match s.as_str() {
-                // arithmetic
                 "+" => exec_binary_op(stack, "+", true, true)?,
                 "-" => exec_binary_op(stack, "-", true, true)?,
                 "*" => exec_binary_op(stack, "*", true, true)?,
                 "/" => exec_binary_op(stack, "/", true, true)?,
                 "div" => exec_binary_op(stack, "div", true, true)?,
-                //logical
                 "<" => exec_binary_op(stack, "<", true, true)?,
                 ">" => exec_binary_op(stack, ">", true, true)?,
                 "==" => exec_binary_op(stack, "==", true, true)?,
@@ -46,11 +44,11 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
                 "cons" => exec_binary_op(stack, "cons", true, true)?,
                 "append" => exec_binary_op(stack, "append", true, true)?,
                 "exec" => exec_unary_op(stack, "exec")?,
-                "if" => exec_ternary_op(stack, "if")?,
+                "if" => exec_ternary_op(stack, "if", true, true, true)?,
                 "map" => exec_binary_op(stack, "map", true, true)?,
                 "each" => exec_binary_op(stack, "each", true, false)?,
                 "times" => exec_binary_op(stack, "times", true, false)?,
-                "foldl" => exec_ternary_op_as_leaves(stack, "foldl")?,
+                "foldl" => exec_ternary_op(stack, "foldl", true, false, false)?,
                 _ => Err(ProgramError::UnknownSymbol)?
             };
             Ok(result)
@@ -99,7 +97,6 @@ fn exec_binary_op(stack: &mut Stack, op: &str, l: bool, r: bool) -> Result<Token
 }
 
 
-
 fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
     let left = exec(stack)?;
     if op == "dup" {
@@ -120,24 +117,26 @@ fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
     }
 }
 
-fn exec_ternary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
-    let right = exec(stack)?;
-    let middle = exec(stack)?;
-    let left = exec(stack)?;
-    match op {
-        "if" => left.if_exp(middle, right, stack),
-        // "foldl" => left
-        _ => Err(ProgramError::UnknownSymbol)
-    }
-}
 
-fn exec_ternary_op_as_leaves(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
-    let right = exec(stack)?;
-    let middle = exec(stack)?;
-    let left = exec(stack)?;
+fn exec_ternary_op(stack: &mut Stack, op: &str, l: bool, m: bool, r: bool) -> Result<Token, ProgramError> {
+    let right = match r {
+        true => exec(stack)?,
+        false => stack.pop()?,
+    };
+    println!("right: {}", right);
+    let middle = match m {
+        true => exec(stack)?,
+        false => stack.pop()?,
+    };
+    println!("middle: {}", middle);
+    let left = match l {
+        true => exec(stack)?,
+        false => stack.pop()?,
+    };
+    println!("left: {}", left);
     match op {
         "if" => left.if_exp(middle, right, stack),
-        // "foldl" => left
+        "foldl" => left.foldl(middle, right),
         _ => Err(ProgramError::UnknownSymbol)
     }
 }

@@ -1,7 +1,11 @@
 use prog2006_assignment_2::{parse, execute};
 
 fn main() {
-    let res = parse("[ 1 2 3 4 ] 0 foldl +");
+    let res = parse("1 times { 100 50 + }");
+    // "1 1 1 1 1 [ ] 5 times { cons } 0 foldl { + }"
+    // "1 1 1 1 1 [ ] cons cons cons cons cons 0 foldl { + }"
+    // "1 1 1 1 1 [ ] cons cons cons cons cons 0 foldl { + }"
+    // "[1,1,1,1,1] 0 foldl { + }"
     // 2 10 times 1 + times
     // 5 10 times +
 

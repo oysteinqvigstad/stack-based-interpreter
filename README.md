@@ -386,7 +386,7 @@ Please implement the same official TESTS such that you can list in your submissi
     t "[ 1 2 3 ] head"      "1"
     t "[ 1 2 3 ] length"    "3"
     t "[ 1 2 3 ] tail"      "[2,3]"
-    t "1 [ ] cons"          "[1]"
+    t "1 [ ] con"          "[1]"
     t "1 [ 2 3 ] cons"      "[1,2,3]"
     t "[ 1 ] [ 2 3 ] append" "[1,2,3]"
     t "[ 1 2 ] [ ] append"  "[1,2]"

@@ -1,13 +1,13 @@
 use std::sync::atomic::spin_loop_hint;
 use crate::enums::Token;
 use crate::enums::ParserError;
-use crate::stack::Stack;
+use crate::stack::State;
 
 
 
 
 // tokenize breaks down a string into a Stack of tokens
-pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
+pub fn tokenize_and_parse(words: &[&str]) -> Result<State, ParserError> {
     let mut stack: Vec<Token> = Vec::new();
     let mut index: usize = 0;
 
@@ -18,7 +18,7 @@ pub fn tokenize_and_parse(words: &[&str]) -> Result<Stack, ParserError> {
     }
 
 
-    Ok(Stack{ tokens: stack })
+    Ok(State { stack: stack })
 }
 
 pub fn get_token(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> Result<Token, ParserError> {
@@ -33,6 +33,7 @@ pub fn get_token(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> R
         "each" => make_binary_infix_to_postfix(index, words, stack),
         "times" => make_binary_infix_to_postfix(index, words, stack),
         "foldl" => make_binary_infix_to_postfix(index, words, stack),
+        "loop" => make_binary_prefix_to_postfix(index, words, stack),
         s if is_bool(s) => Ok(Token::Bool(s.to_lowercase().parse::<bool>().unwrap())),
         s if is_integer(s) => Ok(Token::Int(s.parse::<i128>().unwrap())),
         s if is_float(s) => Ok(Token::Float(s.parse::<f32>().unwrap())),
@@ -90,8 +91,8 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token,
         }
     }
     match (t, level) {
-        (Token::List(_), 0)  => Ok(Token::List(tokenize_and_parse(&words[start_index..*index])?.tokens)),
-        (Token::Block(_), 0) => Ok(Token::Block(tokenize_and_parse(&words[start_index..*index])?.tokens)),
+        (Token::List(_), 0)  => Ok(Token::List(tokenize_and_parse(&words[start_index..*index])?.stack)),
+        (Token::Block(_), 0) => Ok(Token::Block(tokenize_and_parse(&words[start_index..*index])?.stack)),
         (Token::List(_), _)  => Err(ParserError::IncompleteList),
         (Token::Block(_), _) => Err(ParserError::IncompleteQuotation),
         _ => panic!("Incorrect Token Type given to function")
@@ -135,6 +136,17 @@ fn make_if_expression(index: &mut usize, words: &[&str], stack: &mut Vec<Token>)
 
 fn make_binary_infix_to_postfix(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> Result<Token, ParserError> {
     let op = words[*index];
+    *index += 1;
+    let token = get_token(index, words, stack)?;
+    stack.push(token);
+    Ok(Token::Operation(op.to_string()))
+}
+
+fn make_binary_prefix_to_postfix(index: &mut usize, words: &[&str], stack: &mut Vec<Token>) -> Result<Token, ParserError> {
+    let op = words[*index];
+    *index += 1;
+    let token = get_token(index, words, stack)?;
+    stack.push(token);
     *index += 1;
     let token = get_token(index, words, stack)?;
     stack.push(token);

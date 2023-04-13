@@ -1,13 +1,9 @@
 use prog2006_assignment_2::{parse, execute};
 
 fn main() {
-    let res = parse("1 times { 100 50 + }");
-    // "1 1 1 1 1 [ ] 5 times { cons } 0 foldl { + }"
-    // "1 1 1 1 1 [ ] cons cons cons cons cons 0 foldl { + }"
-    // "1 1 1 1 1 [ ] cons cons cons cons cons 0 foldl { + }"
-    // "[1,1,1,1,1] 0 foldl { + }"
-    // 2 10 times 1 + times
-    // 5 10 times +
+    let res = parse("1 loop { dup 4 > } { dup 1 + } [ ] 5 times { cons }");
+    // 1 { dup 4 > } { dup 1 + } loop [ ] cons cons cons cons cons
+
 
     // println!("{}", Token::List(vec![Token::Bool(true), Token::Int(5)]));
     // println!("{:?}", parse("True [ False ] 5 25.2"));

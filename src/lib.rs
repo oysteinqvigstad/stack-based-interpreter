@@ -3,7 +3,7 @@ mod interpreter;
 mod enums;
 mod stack;
 
-use stack::Stack;
+use stack::State;
 use parser::{lex, tokenize_and_parse};
 use interpreter::exec;
 use enums::{ParserError, ProgramError, Token};
@@ -11,12 +11,12 @@ use enums::{ParserError, ProgramError, Token};
 
 
 
-pub fn parse(s: &str) -> Result<Stack, ParserError> {
+pub fn parse(s: &str) -> Result<State, ParserError> {
     tokenize_and_parse(&lex(s))
 }
 
 
-pub fn execute(stack: &mut Stack) -> Result<Token, ProgramError> {
+pub fn execute(stack: &mut State) -> Result<Token, ProgramError> {
     let result = exec(stack)?;
     println!("DEBUG result after execute: {:?}", result);
     println!("DEBUG stack after execute: {:?}", stack);

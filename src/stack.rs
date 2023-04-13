@@ -5,7 +5,7 @@ use crate::enums::{ProgramError, Token};
 #[derive(Debug)]
 pub struct State {
     pub(crate) stack: Vec<Token>,
-    pub(crate) bindings: Map<String, Vec<Token>>
+    // pub(crate) bindings: Map<String, Vec<Token>>
 }
 
 

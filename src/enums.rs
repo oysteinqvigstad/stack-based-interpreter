@@ -3,9 +3,10 @@ use std::fmt::Formatter;
 use std::iter::once;
 use std::mem::discriminant;
 use std::ops::{Add, Sub, Mul, Div};
+use crate::enums::ProgramError::ProgramFinishedWithMultipleValues;
 use crate::interpreter::exec;
 use crate::parser::{lex};
-use crate::stack::Stack;
+use crate::stack::State;
 
 
 #[derive(Debug)]
@@ -249,10 +250,10 @@ impl Token {
         }
     }
 
-    pub fn exec(self: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+    pub fn exec(self: Token, stack: &mut State) -> Result<Token, ProgramError> {
         match self {
             Token::Block(x) => {
-                stack.tokens.extend(x);
+                stack.stack.extend(x);
                 crate::interpreter::exec(stack)
             },
             _ => Err(ProgramError::ExpectedQuotation)
@@ -260,26 +261,26 @@ impl Token {
     }
 
 
-    pub fn if_exp(self, left: Token, right: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+    pub fn if_exp(self, left: Token, right: Token, stack: &mut State) -> Result<Token, ProgramError> {
         match (self, left, right) {
             (Token::Bool(true), Token::Block(y), Token::Block(_)) => {
-                stack.tokens.extend(y);
+                stack.stack.extend(y);
                 crate::interpreter::exec(stack)
             },
             (Token::Bool(false), Token::Block(_), Token::Block(z)) => {
-                stack.tokens.extend(z);
+                stack.stack.extend(z);
                 crate::interpreter::exec(stack)
             },
             _ => Err(ProgramError::ExpectedBool)
         }
     }
 
-    pub fn map(self, other: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+    pub fn map(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
         match (self, other.clone()) {
             (Token::List(x), Token::Block(y)) => {
                 let mut list: Vec<Token> = Vec::new();
                 for item in x {
-                    let result = exec(&mut Stack{tokens: vec![item, other.clone(), Token::Operation("exec".to_string())]})?;
+                    let result = exec(&mut State { stack: vec![item, other.clone(), Token::Operation("exec".to_string())]})?;
                     list.push(result)
                 }
                 Ok(Token::List(list))
@@ -289,11 +290,11 @@ impl Token {
         }
     }
 
-    pub fn each(self, other: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+    pub fn each(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
         match (self, other.clone()) {
             (Token::List(x), Token::Block(y)) => {
                 for item in x {
-                    let result = exec(&mut Stack{tokens: vec![item, other.clone(), Token::Operation("exec".to_string())]})?;
+                    let result = exec(&mut State { stack: vec![item, other.clone(), Token::Operation("exec".to_string())]})?;
                     stack.push(result)
                 }
                 stack.pop()
@@ -301,7 +302,7 @@ impl Token {
             (Token::List(x), _) => {
                 println!("dette er {:?}", other);
                 for item in x {
-                    let result = exec(&mut Stack{tokens: vec![item, other.clone()]})?;
+                    let result = exec(&mut State { stack: vec![item, other.clone()]})?;
                     stack.push(result)
                 }
                 stack.pop()
@@ -312,11 +313,11 @@ impl Token {
         }
     }
 
-    pub fn times(self, other: Token, stack: &mut Stack) -> Result<Token, ProgramError> {
+    pub fn times(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
         match (self, other.clone()) {
             (Token::Int(x), Token::Block(y)) => {
                 for i in 0..x {
-                    stack.tokens.extend(y.clone());
+                    stack.stack.extend(y.clone());
                 }
                 crate::interpreter::exec(stack)
             },
@@ -336,19 +337,45 @@ impl Token {
         match (self, middle, right.clone()) {
             (Token::List(x), Token::Int(y), Token::Block(z)) => {
                 for item in x {
-                    sum = exec(&mut Stack{tokens: vec![sum.clone(), item, right.clone(), Token::Operation("exec".to_string())]})?;
+                    sum = exec(&mut State { stack: vec![sum.clone(), item, right.clone(), Token::Operation("exec".to_string())]})?;
                 }
                 Ok(sum)
             },
             (Token::List(x), Token::Int(y), Token::Operation(z)) => {
                 for item in x {
-                    sum = exec(&mut Stack{tokens: vec![sum.clone(), item, right.clone()]})?;
+                    sum = exec(&mut State { stack: vec![sum.clone(), item, right.clone()]})?;
                 }
                 Ok(sum)
             },
             _ => Err(ProgramError::ExpectedBoolOrNumber)
         }
     }
+
+    pub fn while_loop(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
+        match (self, other) {
+            (Token::Block(x), Token::Block(y)) => {
+                loop {
+                    // pushing condition to stack
+                    stack.stack.extend(x.clone());
+                    // checking condition
+                    match crate::interpreter::exec(stack)? {
+                        Token::Bool(true) => return stack.pop(),
+                        Token::Bool(false) => {
+                            stack.stack.extend(y.clone());
+
+                            continue
+                        }
+                        _ => return Err(ProgramError::ExpectedBool)
+                    }
+                }
+            },
+            _ => Err(ProgramError::ExpectedQuotation)
+        }
+    }
+
+
+
+
 
 
 

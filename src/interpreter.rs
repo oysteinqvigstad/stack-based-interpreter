@@ -1,9 +1,9 @@
-use crate::stack::Stack;
+use crate::stack::State;
 use crate::enums::{ProgramError, Token};
 
 
 
-pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
+pub fn exec(stack: &mut State) -> Result<Token, ProgramError> {
     println!("{:?}", stack);
     match stack.pop() {
         Err(_) => Err(ProgramError::StackEmpty),
@@ -16,7 +16,7 @@ pub fn exec(stack: &mut Stack) -> Result<Token, ProgramError> {
 }
 
 
-fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramError> {
+fn evaluate_operation(stack: &mut State, token: Token) -> Result<Token, ProgramError> {
     match &token {
         Token::Operation(s) => {
             let result = match s.as_str() {
@@ -49,6 +49,7 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
                 "each" => exec_binary_op(stack, "each", true, false)?,
                 "times" => exec_binary_op(stack, "times", true, false)?,
                 "foldl" => exec_ternary_op(stack, "foldl", true, false, false)?,
+                "loop" => exec_binary_op(stack, "loop", false, false)?,
                 _ => Err(ProgramError::UnknownSymbol)?
             };
             Ok(result)
@@ -60,7 +61,7 @@ fn evaluate_operation(stack: &mut Stack, token: Token) -> Result<Token, ProgramE
 
 // this function that operations can be multiplied as well instead of evaluating whats beneath it
 // `l` and `r` will allow operator recursion if the params are true
-fn exec_binary_op(stack: &mut Stack, op: &str, l: bool, r: bool) -> Result<Token, ProgramError> {
+fn exec_binary_op(stack: &mut State, op: &str, l: bool, r: bool) -> Result<Token, ProgramError> {
     let right = match r {
         true => exec(stack)?,
         false => stack.pop()?,
@@ -91,13 +92,14 @@ fn exec_binary_op(stack: &mut Stack, op: &str, l: bool, r: bool) -> Result<Token
         "map" => left.map(right, stack),
         "times" => left.times(right, stack),
         "each" => left.each(right, stack),
+        "loop" => left.while_loop(right, stack),
         _ => Err(ProgramError::UnknownSymbol)
     }
 
 }
 
 
-fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
+fn exec_unary_op(stack: &mut State, op: &str) -> Result<Token, ProgramError> {
     let left = exec(stack)?;
     if op == "dup" {
         stack.push(left.clone())
@@ -118,7 +120,7 @@ fn exec_unary_op(stack: &mut Stack, op: &str) -> Result<Token, ProgramError> {
 }
 
 
-fn exec_ternary_op(stack: &mut Stack, op: &str, l: bool, m: bool, r: bool) -> Result<Token, ProgramError> {
+fn exec_ternary_op(stack: &mut State, op: &str, l: bool, m: bool, r: bool) -> Result<Token, ProgramError> {
     let right = match r {
         true => exec(stack)?,
         false => stack.pop()?,

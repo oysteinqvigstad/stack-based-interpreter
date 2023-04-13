@@ -316,20 +316,41 @@ impl Token {
         match (self, other.clone()) {
             (Token::Int(x), Token::Block(y)) => {
                 for i in 0..x {
-                    let result = exec(&mut Stack{tokens: vec![other.clone(), Token::Operation("exec".to_string())]})?;
-                    stack.push(result)
+                    stack.tokens.extend(y.clone());
                 }
-                stack.pop()
+                crate::interpreter::exec(stack)
             },
             (Token::Int(x), _) => {
                 for i in 0..x {
                     stack.push(other.clone())
                 }
-                Ok(exec((stack))?)
+                crate::interpreter::exec(stack)
             }
             _ => Err(ProgramError::ExpectedBoolOrNumber)
         }
     }
+
+
+    pub fn foldl(self, middle: Token, right: Token) -> Result<Token, ProgramError> {
+        let mut sum = middle.clone();
+        match (self, middle, right.clone()) {
+            (Token::List(x), Token::Int(y), Token::Block(z)) => {
+                for item in x {
+                    sum = exec(&mut Stack{tokens: vec![sum.clone(), item, right.clone(), Token::Operation("exec".to_string())]})?;
+                }
+                Ok(sum)
+            },
+            (Token::List(x), Token::Int(y), Token::Operation(z)) => {
+                for item in x {
+                    sum = exec(&mut Stack{tokens: vec![sum.clone(), item, right.clone()]})?;
+                }
+                Ok(sum)
+            },
+            _ => Err(ProgramError::ExpectedBoolOrNumber)
+        }
+    }
+
+
 
 }
 

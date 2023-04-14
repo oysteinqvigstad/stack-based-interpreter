@@ -1,11 +1,13 @@
 use std::fmt;
-use std::iter::Map;
-use crate::enums::{ProgramError, Token};
+use std::hash::Hash;
+use std::collections::{HashMap, VecDeque};
+use crate::token::{ProgramError, Token};
 
 #[derive(Debug)]
 pub struct State {
     pub(crate) stack: Vec<Token>,
-    // pub(crate) bindings: Map<String, Vec<Token>>
+    pub(crate) instruction_set: VecDeque<Token>,
+    pub(crate) bindings: HashMap<String, Token>
 }
 
 
@@ -14,7 +16,6 @@ impl fmt::Display for State {
        write!(f, "{}", self.stack.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "))
    }
 }
-
 
 
 
@@ -29,6 +30,22 @@ impl State {
             None => Err(ProgramError::StackEmpty)
         }
     }
+
+    pub fn swap(&mut self) -> Result<Token, ProgramError> {
+        let right = self.pop()?;
+        let left = self.pop()?;
+        self.push(right);
+        Ok(left)
+        
+    }
+    
+    
+    pub fn get_instructions(self) -> Vec<Token> {
+        self.instruction_set.into_iter().collect()
+
+    }
+
+
 
     pub fn len(&mut self) -> usize {
         self.stack.len()

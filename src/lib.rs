@@ -1,14 +1,13 @@
 mod parser;
 mod interpreter;
-mod enums;
-mod stack;
+mod token;
+mod state;
 
-use stack::State;
+use state::State;
 use parser::{lex, tokenize_and_parse};
-use interpreter::exec;
-use enums::{ParserError, ProgramError, Token};
-
-
+// use interpreter::exec;
+use token::{ParserError, ProgramError, Token};
+use crate::interpreter::exec_entry;
 
 
 pub fn parse(s: &str) -> Result<State, ParserError> {
@@ -17,7 +16,7 @@ pub fn parse(s: &str) -> Result<State, ParserError> {
 
 
 pub fn execute(stack: &mut State) -> Result<Token, ProgramError> {
-    let result = exec(stack)?;
+    let result = exec_entry(stack)?;
     println!("DEBUG result after execute: {:?}", result);
     println!("DEBUG stack after execute: {:?}", stack);
     match stack.len() {

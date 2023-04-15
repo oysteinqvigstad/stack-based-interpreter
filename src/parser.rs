@@ -1,28 +1,29 @@
 use std::collections::{HashMap, VecDeque};
+use std::result;
 use crate::token::Token;
 use crate::token::ParserError;
 use crate::state::State;
 
 
 
+pub fn parse(s: &str, state: &mut State) -> Result<(), ParserError> {
+    tokenize_and_parse(&lex(s), state)
+}
+
 
 // tokenize breaks down a string into a Stack of tokens
-pub fn tokenize_and_parse(words: &[&str]) -> Result<State, ParserError> {
-    let stack: Vec<Token> = Vec::new();
-    let mut instruction_set: VecDeque<Token> = VecDeque::new();
-    let bindings: HashMap<String, Token> = HashMap::new();
+fn tokenize_and_parse(words: &[&str], state: &mut State) -> Result<(), ParserError> {
     let mut index: usize = 0;
 
     while index < words.len() {
         let token = get_token(&mut index, words)?;
-        instruction_set.push_back(token);
+        state.instruction_set.push_back(token);
         index += 1;
     }
-
-    Ok(State { stack, instruction_set, bindings })
+    Ok(())
 }
 
-pub fn get_token(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
+fn get_token(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
     match words[index.clone()] {
         "[" => make_collection(index, words, Token::List(vec![])),
         "{" => make_collection(index, words, Token::Block(vec![])),
@@ -35,9 +36,6 @@ pub fn get_token(index: &mut usize, words: &[&str]) -> Result<Token, ParserError
         s => Ok(Token::Symbol(s.to_string()))
     }
 }
-
-
-
 
 
 
@@ -68,6 +66,7 @@ fn is_bool(s: &str) -> bool {
 
 
 fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token, ParserError> {
+    let mut collection_state = State::new();
     let mut level = 0;
     let start_index = *index + 1;
     while *index < words.len() {
@@ -86,8 +85,14 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token,
         }
     }
     match (t, level) {
-        (Token::List(_), 0)  => Ok(Token::List(tokenize_and_parse(&words[start_index..*index])?.get_instructions())),
-        (Token::Block(_), 0) => Ok(Token::Block(tokenize_and_parse(&words[start_index..*index])?.get_instructions())),
+        (Token::List(_), 0)  => {
+            tokenize_and_parse(&words[start_index..*index], &mut collection_state)?;
+            Ok(Token::List(collection_state.get_instructions()))
+        },
+        (Token::Block(_), 0) => {
+            tokenize_and_parse(&words[start_index..*index], &mut collection_state)?;
+            Ok(Token::Block(collection_state.get_instructions()))
+        },
         (Token::List(_), _)  => Err(ParserError::IncompleteList),
         (Token::Block(_), _) => Err(ParserError::IncompleteQuotation),
         _ => panic!("Incorrect Token Type given to function")

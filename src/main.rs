@@ -1,13 +1,5 @@
-use prog2006_assignment_2::{parse, execute};
+use prog2006_assignment_2::repl_mode;
 
 fn main() {
-    let res = parse("age 10 := age");
-    match res {
-        Ok(x) => {
-            let mut test = x;
-            println!("Before running: {:?}", &test);
-            println!("Result: {:?}", execute(&mut test));
-        },
-        Err(x) => println!("{:?}", x)
-    }
+    repl_mode();
 }

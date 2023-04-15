@@ -1,9 +1,10 @@
 use std::fmt;
 use std::collections::{HashMap, VecDeque};
 use crate::interpreter::exec_entry;
+use crate::parser::lex;
 use crate::token::{ProgramError, Token};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct State {
     pub(crate) stack: Vec<Token>,
     pub(crate) instruction_set: VecDeque<Token>,
@@ -20,6 +21,14 @@ impl fmt::Display for State {
 
 
 impl State {
+    pub fn new() -> Self {
+        let stack: Vec<Token> = Vec::new();
+        let mut instruction_set: VecDeque<Token> = VecDeque::new();
+        let bindings: HashMap<String, Token> = HashMap::new();
+        Self { stack, instruction_set, bindings }
+    }
+
+
     pub fn push(&mut self, token: Token) {
         self.stack.push(token)
     }
@@ -45,10 +54,16 @@ impl State {
         self.push(left.clone());
         self.push(left);
         Ok(None)
-
-
     }
 
+    pub fn peek(&mut self) -> Result<Option<Token>, ProgramError> {
+        let size = self.len();
+        if size == 0 {
+            Err(ProgramError::StackEmpty)
+        } else {
+            Ok(Some(self.stack[size - 1].clone()))
+        }
+    }
 
     pub fn get_instructions(self) -> Vec<Token> {
         self.instruction_set.into_iter().collect()

@@ -4,12 +4,11 @@ use crate::token::{ProgramError, Token};
 
 
 pub fn exec(state: &mut State) -> Result<Token, ProgramError> {
-    exec_entry(state);
-    println!("After execution: {:?}", state);
+    exec_entry(state)?;
 
     match state.len() {
         0 => Err(ProgramError::StackEmpty),
-        1 => state.stack_pop(),
+        1 => Ok(state.peek()?.unwrap()),
         _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
     }
 }

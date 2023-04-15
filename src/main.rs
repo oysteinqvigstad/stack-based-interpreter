@@ -1,7 +1,7 @@
 use prog2006_assignment_2::{parse, execute};
 
 fn main() {
-    let res = parse("10 20 swap");
+    let res = parse("age 10 := age");
     match res {
         Ok(x) => {
             let mut test = x;
@@ -11,3 +11,14 @@ fn main() {
         Err(x) => println!("{:?}", x)
     }
 }
+
+// "1 loop { dup 4 > } { dup 1 + }      [ ] 5 times { cons }"
+// "1 True
+// 1 2
+
+
+
+
+
+// 1
+//

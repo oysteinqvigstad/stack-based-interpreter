@@ -1,8 +1,10 @@
+use std::collections::VecDeque;
 use std::fmt;
 use std::fmt::Formatter;
 use std::iter::once;
 use std::mem::discriminant;
 use std::ops::{Add, Sub, Mul, Div};
+use crate::interpreter::exec;
 use crate::token::ProgramError::ProgramFinishedWithMultipleValues;
 // use crate::interpreter::exec;
 use crate::parser::{lex};
@@ -248,64 +250,77 @@ impl Token {
             _ => Err(ProgramError::ExpectedList)
         }
     }
-}
-/*
-    pub fn exec(self: Token, stack: &mut State) -> Result<Token, ProgramError> {
+    pub fn exec(self: Token, state: &mut State) -> Result<Option<Token>, ProgramError> {
         match self {
             Token::Block(x) => {
-                stack.stack.extend(x);
-                crate::interpreter::exec(stack)
+                x.iter().rev().for_each(|t| state.instruction_set.push_front(t.clone()));
+                Ok(None)
             },
             _ => Err(ProgramError::ExpectedQuotation)
         }
     }
 
 
-    pub fn if_exp(self, left: Token, right: Token, stack: &mut State) -> Result<Token, ProgramError> {
-        match (self, left, right) {
-            (Token::Bool(true), Token::Block(y), Token::Block(_)) => {
-                stack.stack.extend(y);
-                crate::interpreter::exec(stack)
+    pub fn if_exp(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
+        let middle = state.pop_instruction()?;
+        let right = state.pop_instruction()?;
+
+        match (self, middle, right) {
+            (Token::Bool(true), Token::Block(y), _) => {
+                y.iter().rev().for_each(|t| state.instruction_set.push_front(t.clone()));
+                Ok(None)
             },
-            (Token::Bool(false), Token::Block(_), Token::Block(z)) => {
-                stack.stack.extend(z);
-                crate::interpreter::exec(stack)
+            (Token::Bool(false), _, Token::Block(z)) => {
+                z.iter().rev().for_each(|t| state.instruction_set.push_front(t.clone()));
+                Ok(None)
+            },
+            (Token::Bool(true), y, _) => {
+                state.instruction_set.push_front(y);
+                Ok(None)
+            },
+            (Token::Bool(false), _, z) => {
+                state.instruction_set.push_front(z);
+                Ok(None)
             },
             _ => Err(ProgramError::ExpectedBool)
         }
     }
 
-    pub fn map(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
-        match (self, other.clone()) {
+    pub fn map(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
+        let right = state.pop_instruction()?;
+        match (self, right.clone()) {
             (Token::List(x), Token::Block(y)) => {
                 let mut list: Vec<Token> = Vec::new();
                 for item in x {
-                    let result = exec(&mut State { stack: vec![item, other.clone(), Token::Symbol("exec".to_string())], bindings: stack.bindings.clone() })?;
+                    let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
+                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
                     list.push(result)
                 }
-                Ok(Token::List(list))
+                rt(Token::List(list))
             },
             _ => Err(ProgramError::ExpectedList)
 
         }
     }
 
-    pub fn each(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
-        match (self, other.clone()) {
+    pub fn each(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
+        let right = state.pop_instruction()?;
+        match (self, right.clone()) {
             (Token::List(x), Token::Block(y)) => {
                 for item in x {
-                    let result = exec(&mut State { stack: vec![item, other.clone(), Token::Symbol("exec".to_string())], bindings: stack.bindings.clone() })?;
-                    stack.push(result)
+                    let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
+                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    state.push(result)
                 }
-                stack.pop()
+                Ok(None)
             },
             (Token::List(x), _) => {
-                println!("dette er {:?}", other);
                 for item in x {
-                    let result = exec(&mut State { stack: vec![item, other.clone()], bindings: stack.bindings.clone() })?;
-                    stack.push(result)
+                    let instructions = vec![item, right.clone()];
+                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    state.push(result)
                 }
-                stack.pop()
+                Ok(None)
             }
 
 
@@ -313,44 +328,50 @@ impl Token {
         }
     }
 
-    pub fn times(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
-        match (self, other.clone()) {
+    pub fn times(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
+        let right = state.pop_instruction()?;
+        match (self, right.clone()) {
             (Token::Int(x), Token::Block(y)) => {
                 for i in 0..x {
-                    stack.stack.extend(y.clone());
+                    right.clone().exec(state);
                 }
-                crate::interpreter::exec(stack)
+                Ok(None)
             },
             (Token::Int(x), _) => {
                 for i in 0..x {
-                    stack.push(other.clone())
+                    state.instruction_set.push_front(right.clone())
                 }
-                crate::interpreter::exec(stack)
+                Ok(None)
             }
             _ => Err(ProgramError::ExpectedBoolOrNumber)
         }
     }
 
 
-    pub fn foldl(self, middle: Token, right: Token, stack: &mut State) -> Result<Token, ProgramError> {
+    pub fn foldl(self, middle: Token, state: &mut State) -> Result<Option<Token>, ProgramError> {
+        let right = state.pop_instruction()?;
         let mut sum = middle.clone();
         match (self, middle, right.clone()) {
             (Token::List(x), Token::Int(y), Token::Block(z)) => {
                 for item in x {
-                    sum = exec(&mut State { stack: vec![sum.clone(), item, right.clone(), Token::Symbol("exec".to_string())], bindings: stack.bindings.clone() })?;
+                    let instructions = vec![sum.clone(), item, right.clone(), Token::Symbol("exec".to_string())];
+                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
                 }
-                Ok(sum)
+                rt(sum)
             },
             (Token::List(x), Token::Int(y), Token::Symbol(z)) => {
                 for item in x {
-                    sum = exec(&mut State { stack: vec![sum.clone(), item, right.clone()], bindings: stack.bindings.clone() })?;
+                    let instructions = vec![sum.clone(), item, right.clone()];
+                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
                 }
-                Ok(sum)
+                rt(sum)
             },
             _ => Err(ProgramError::ExpectedBoolOrNumber)
         }
     }
 
+}
+/*
     pub fn while_loop(self, other: Token, stack: &mut State) -> Result<Token, ProgramError> {
         match (self, other) {
             (Token::Block(x), Token::Block(y)) => {

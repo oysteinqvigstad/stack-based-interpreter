@@ -1,9 +1,7 @@
 use std::fmt;
-use std::hash::Hash;
 use std::collections::{HashMap, VecDeque};
-use crate::interpreter::{exec_entry, exec};
+use crate::interpreter::exec_entry;
 use crate::token::{ProgramError, Token};
-use crate::token::Token::Block;
 
 #[derive(Debug)]
 pub struct State {
@@ -98,6 +96,14 @@ impl State {
             _ => Err(ProgramError::ExpectedQuotation)
         }
 
+    }
+
+
+    pub fn get_bind(&mut self, op: &str) -> Result<Option<Token>, ProgramError> {
+        match self.bindings.get(op) {
+            Some(t) => Ok(Some(t.clone())),
+            None => Ok(Some(Token::Symbol(op.to_string())))
+        }
     }
 
 

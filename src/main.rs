@@ -11,14 +11,3 @@ fn main() {
         Err(x) => println!("{:?}", x)
     }
 }
-
-// "1 loop { dup 4 > } { dup 1 + }      [ ] 5 times { cons }"
-// "1 True
-// 1 2
-
-
-
-
-
-// 1
-//

@@ -1,6 +1,5 @@
 use crate::state::State;
 use crate::token::{ProgramError, Token};
-use crate::token::ProgramError::UnknownSymbol;
 
 
 
@@ -15,17 +14,19 @@ pub fn exec(state: &mut State) -> Result<Token, ProgramError> {
     }
 }
 
-
 pub fn exec_entry(state: &mut State) -> Result<(), ProgramError> {
     while !state.instruction_set.is_empty() {
         for item in state.instruction_set.pop_front() {
             match item.clone() {
-                Token::Symbol(x) => match evaluate_operation(state, item)? {
+                Token::Symbol(_) => match evaluate_operation(state, item)? {
                     Some(token) => state.push(token),
-                    None => {
-                        // println!("item: {:?} stack: {:?}", item.clone(), state.stack);
+                    None => continue
+                },
+                Token::List(_) => {
+                    match eval_list(state, item.clone())? {
+                        Some(token) => state.push(token),
+                        None => continue
 
-                        continue
                     }
                 },
                 _ => state.push(item)
@@ -33,12 +34,7 @@ pub fn exec_entry(state: &mut State) -> Result<(), ProgramError> {
         }
     }
     Ok(())
-
-
 }
-
-
-
 
 
 fn evaluate_operation(stack: &mut State, token: Token) -> Result<Option<Token>, ProgramError> {
@@ -75,18 +71,13 @@ fn evaluate_operation(stack: &mut State, token: Token) -> Result<Option<Token>, 
                 "foldl" => exec_binary_op(stack, "foldl"),
                 "if" => exec_unary_op(stack, "if"),
                 "loop" => stack.exec_loop(),
-                // ":=" => exec_binary_op_old(stack, ":=", true, true)?,
-                // x => {
-                //     match stack.bindings.get(x) {
-                //         Some(t) => t.clone(),
-                //         None => return Ok(Some(Token::Symbol(x.to_string())))
-                _ => Err(ProgramError::UnknownSymbol)
+                ":=" => exec_binary_op(stack, ":="),
+                x => stack.get_bind(x),
             }
         },
         _ => panic!("Non-operation cannot be executed")
     }
 }
-
 
 fn exec_binary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramError> {
     let right = stack.stack_pop()?;
@@ -106,15 +97,11 @@ fn exec_binary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramE
         "cons" => right.cons(left),
         "append" => left.append(right),
         "foldl" => left.foldl(right, stack),
-        // "loop" => left.while_loop(right, stack),
-        // ":=" => left.bind(right, stack),
+        ":=" => left.set_bind(right, stack),
         _ => Err(ProgramError::UnknownSymbol)
     }
 
 }
-
-
-
 
 fn exec_unary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramError> {
     let left = stack.stack_pop()?;
@@ -133,16 +120,24 @@ fn exec_unary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramEr
         "exec" => left.exec(stack),
         "each" => left.each(stack),
         "times" => left.times(stack),
-            _ => Err(ProgramError::UnknownSymbol)
+        _ => Err(ProgramError::UnknownSymbol)
     }
 }
 
-
-fn exec_ternary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramError> {
-    let right = stack.stack_pop()?;
-    let middle = stack.stack_pop()?;
-    let left = stack.stack_pop()?;
-    match op {
-        _ => Err(ProgramError::UnknownSymbol)
+fn eval_list(state: &mut State, t: Token) -> Result<Option<Token>, ProgramError> {
+    match t {
+        Token::List(items) => {
+            let mut updated_list = Vec::<Token>::new();
+            for item in items {
+                let token = match item {
+                    Token::Symbol(op) => state.get_bind(op.as_str())?.unwrap(),
+                    Token::List(_) => eval_list(state, item)?.unwrap(),
+                    _ => item
+                };
+                updated_list.push(token);
+            }
+            Ok(Some(Token::List(updated_list)))
+        },
+        _ => Err(ProgramError::ExpectedList)
     }
 }

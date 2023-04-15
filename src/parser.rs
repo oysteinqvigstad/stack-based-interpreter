@@ -1,5 +1,4 @@
 use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::spin_loop_hint;
 use crate::token::Token;
 use crate::token::ParserError;
 use crate::state::State;
@@ -9,21 +8,21 @@ use crate::state::State;
 
 // tokenize breaks down a string into a Stack of tokens
 pub fn tokenize_and_parse(words: &[&str]) -> Result<State, ParserError> {
-    let mut stack: Vec<Token> = Vec::new();
+    let stack: Vec<Token> = Vec::new();
     let mut instruction_set: VecDeque<Token> = VecDeque::new();
     let bindings: HashMap<String, Token> = HashMap::new();
     let mut index: usize = 0;
 
     while index < words.len() {
-        let token = get_token(&mut index, words, &mut instruction_set)?;
+        let token = get_token(&mut index, words)?;
         instruction_set.push_back(token);
         index += 1;
     }
 
-    Ok(State { stack: stack, instruction_set: instruction_set, bindings: bindings })
+    Ok(State { stack, instruction_set, bindings })
 }
 
-pub fn get_token(index: &mut usize, words: &[&str], stack: &mut VecDeque<Token>) -> Result<Token, ParserError> {
+pub fn get_token(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
     match words[index.clone()] {
         "[" => make_collection(index, words, Token::List(vec![])),
         "{" => make_collection(index, words, Token::Block(vec![])),
@@ -116,35 +115,3 @@ fn make_string(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> 
 }
 
 
-fn make_if_expression(index: &mut usize, words: &[&str], stack: &mut VecDeque<Token>) -> Result<Token, ParserError> {
-    *index += 1;
-    for _ in 0..2 {
-        let token = match get_token(index, words, stack)? {
-            Token::Block(x) => Token::Block(x),
-            x => Token::Block(vec![x])
-        };
-        *index += 1;
-        stack.push_back(token);
-    }
-    Ok(Token::Symbol("if".to_string()))
-
-}
-
-fn make_binary_infix_to_postfix(index: &mut usize, words: &[&str], stack: &mut VecDeque<Token>) -> Result<Token, ParserError> {
-    let op = words[*index];
-    *index += 1;
-    let token = get_token(index, words, stack)?;
-    stack.push_back(token);
-    Ok(Token::Symbol(op.to_string()))
-}
-
-fn make_binary_prefix_to_postfix(index: &mut usize, words: &[&str], stack: &mut VecDeque<Token>) -> Result<Token, ParserError> {
-    let op = words[*index];
-    *index += 1;
-    let token = get_token(index, words, stack)?;
-    stack.push_back(token);
-    *index += 1;
-    let token = get_token(index, words, stack)?;
-    stack.push_back(token);
-    Ok(Token::Symbol(op.to_string()))
-}

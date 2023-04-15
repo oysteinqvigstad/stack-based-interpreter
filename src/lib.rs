@@ -1,14 +1,13 @@
 mod parser;
 mod interpreter;
-mod enums;
-mod stack;
+mod token;
+mod state;
 
-use stack::State;
+use state::State;
 use parser::{lex, tokenize_and_parse};
-use interpreter::exec;
-use enums::{ParserError, ProgramError, Token};
-
-
+// use interpreter::exec;
+use token::{ParserError, ProgramError, Token};
+use crate::interpreter::exec;
 
 
 pub fn parse(s: &str) -> Result<State, ParserError> {

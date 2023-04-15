@@ -1,79 +1,88 @@
-use crate::stack::State;
-use crate::enums::{ProgramError, Token};
+use crate::state::State;
+use crate::token::{ProgramError, Token};
 
 
 
-pub fn exec(stack: &mut State) -> Result<Token, ProgramError> {
-    println!("{:?}", stack);
-    match stack.pop() {
-        Err(_) => Err(ProgramError::StackEmpty),
-        Ok(t) =>
-            match t {
-                Token::Operation(_) => evaluate_operation(stack, t),
-                _ => Ok(t)
-            }
+pub fn exec(state: &mut State) -> Result<Token, ProgramError> {
+    exec_entry(state);
+    println!("After execution: {:?}", state);
+
+    match state.len() {
+        0 => Err(ProgramError::StackEmpty),
+        1 => state.stack_pop(),
+        _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
     }
 }
 
+pub fn exec_entry(state: &mut State) -> Result<(), ProgramError> {
+    while !state.instruction_set.is_empty() {
+        for item in state.instruction_set.pop_front() {
+            match item.clone() {
+                Token::Symbol(_) => match evaluate_operation(state, item)? {
+                    Some(token) => state.push(token),
+                    None => continue
+                },
+                Token::List(_) => {
+                    match eval_list(state, item.clone())? {
+                        Some(token) => state.push(token),
+                        None => continue
 
-fn evaluate_operation(stack: &mut State, token: Token) -> Result<Token, ProgramError> {
-    match &token {
-        Token::Operation(s) => {
-            let result = match s.as_str() {
-                "+" => exec_binary_op(stack, "+", true, true)?,
-                "-" => exec_binary_op(stack, "-", true, true)?,
-                "*" => exec_binary_op(stack, "*", true, true)?,
-                "/" => exec_binary_op(stack, "/", true, true)?,
-                "div" => exec_binary_op(stack, "div", true, true)?,
-                "<" => exec_binary_op(stack, "<", true, true)?,
-                ">" => exec_binary_op(stack, ">", true, true)?,
-                "==" => exec_binary_op(stack, "==", true, true)?,
-                "not" => exec_unary_op(stack, "not")?,
-                "&&" => exec_binary_op(stack, "&&", true, true)?,
-                "||" => exec_binary_op(stack, "||", true, true)?,
-                "length" => exec_unary_op(stack, "length")?,
-                "parseInteger" => exec_unary_op(stack, "parseInteger")?,
-                "parseFloat" => exec_unary_op(stack, "parseFloat")?,
-                "pop" => exec_binary_op(stack, "pop", true, true)?,
-                "swap" => exec_binary_op(stack, "swap", true, true)?,
-                "dup" => exec_unary_op(stack, "dup")?,
-                "words" => exec_unary_op(stack, "words")?,
-                "empty" => exec_unary_op(stack, "empty")?,
-                "head" => exec_unary_op(stack, "head")?,
-                "tail" => exec_unary_op(stack, "tail")?,
-                "cons" => exec_binary_op(stack, "cons", true, true)?,
-                "append" => exec_binary_op(stack, "append", true, true)?,
-                "exec" => exec_unary_op(stack, "exec")?,
-                "if" => exec_ternary_op(stack, "if", true, true, true)?,
-                "map" => exec_binary_op(stack, "map", true, true)?,
-                "each" => exec_binary_op(stack, "each", true, false)?,
-                "times" => exec_binary_op(stack, "times", true, false)?,
-                "foldl" => exec_ternary_op(stack, "foldl", true, false, false)?,
-                "loop" => exec_binary_op(stack, "loop", false, false)?,
-                _ => Err(ProgramError::UnknownSymbol)?
+                    }
+                },
+                _ => state.push(item)
             };
-            Ok(result)
+        }
+    }
+    Ok(())
+}
+
+
+fn evaluate_operation(stack: &mut State, token: Token) -> Result<Option<Token>, ProgramError> {
+    match &token {
+        Token::Symbol(s) => {
+            match s.as_str() {
+                "+" => exec_binary_op(stack, "+"),
+                "-" => exec_binary_op(stack, "-"),
+                "*" => exec_binary_op(stack, "*"),
+                "/" => exec_binary_op(stack, "/"),
+                "div" => exec_binary_op(stack, "div"),
+                "<" => exec_binary_op(stack, "<"),
+                ">" => exec_binary_op(stack, ">"),
+                "==" => exec_binary_op(stack, "=="),
+                "not" => exec_unary_op(stack, "not"),
+                "&&" => exec_binary_op(stack, "&&"),
+                "||" => exec_binary_op(stack, "||"),
+                "length" => exec_unary_op(stack, "length"),
+                "parseInteger" => exec_unary_op(stack, "parseInteger"),
+                "parseFloat" => exec_unary_op(stack, "parseFloat"),
+                "words" => exec_unary_op(stack, "words"),
+                "pop" => exec_unary_op(stack, "pop"),
+                "swap" => stack.stack_swap(),
+                "dup" =>  stack.stack_dup(),
+                "empty" => exec_unary_op(stack, "empty"),
+                "head" => exec_unary_op(stack, "head"),
+                "tail" => exec_unary_op(stack, "tail"),
+                "cons" => exec_binary_op(stack, "cons"),
+                "append" => exec_binary_op(stack, "append"),
+                "exec" => exec_unary_op(stack, "exec"),
+                "map" => exec_unary_op(stack, "map"),
+                "each" => exec_unary_op(stack, "each"),
+                "times" => exec_unary_op(stack, "times"),
+                "foldl" => exec_binary_op(stack, "foldl"),
+                "if" => exec_unary_op(stack, "if"),
+                "loop" => stack.exec_loop(),
+                ":=" => exec_binary_op(stack, ":="),
+                x => stack.get_bind(x),
+            }
         },
         _ => panic!("Non-operation cannot be executed")
     }
 }
 
+fn exec_binary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramError> {
+    let right = stack.stack_pop()?;
+    let left = stack.stack_pop()?;
 
-// this function that operations can be multiplied as well instead of evaluating whats beneath it
-// `l` and `r` will allow operator recursion if the params are true
-fn exec_binary_op(stack: &mut State, op: &str, l: bool, r: bool) -> Result<Token, ProgramError> {
-    let right = match r {
-        true => exec(stack)?,
-        false => stack.pop()?,
-    };
-    let left = match l {
-        true => exec(stack)?,
-        false => stack.pop()?,
-    };
-
-    if op == "swap" {
-        stack.push(right.clone())
-    }
     match op {
         "+" => left + right,
         "-" => left - right,
@@ -85,60 +94,50 @@ fn exec_binary_op(stack: &mut State, op: &str, l: bool, r: bool) -> Result<Token
         "==" => left.eq(right),
         "&&" => left.and(right),
         "||" => left.or(right),
-        "pop" => Ok(left),
-        "swap" => Ok(left),
         "cons" => right.cons(left),
         "append" => left.append(right),
-        "map" => left.map(right, stack),
-        "times" => left.times(right, stack),
-        "each" => left.each(right, stack),
-        "loop" => left.while_loop(right, stack),
+        "foldl" => left.foldl(right, stack),
+        ":=" => left.set_bind(right, stack),
         _ => Err(ProgramError::UnknownSymbol)
     }
 
 }
 
-
-fn exec_unary_op(stack: &mut State, op: &str) -> Result<Token, ProgramError> {
-    let left = exec(stack)?;
-    if op == "dup" {
-        stack.push(left.clone())
-    }
+fn exec_unary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramError> {
+    let left = stack.stack_pop()?;
     match op {
+        "pop" => Ok(None),
         "not" => left.not(),
         "length" => left.len(),
         "parseInteger" => left.parse_int(),
         "parseFloat" => left.parse_float(),
-        "dup" => Ok(left),
         "words" => left.words(),
         "empty" => left.empty(),
         "head" => left.head(),
         "tail" => left.tail(),
+        "if" => left.if_exp(stack),
+        "map" => left.map(stack),
         "exec" => left.exec(stack),
-            _ => Err(ProgramError::UnknownSymbol)
+        "each" => left.each(stack),
+        "times" => left.times(stack),
+        _ => Err(ProgramError::UnknownSymbol)
     }
 }
 
-
-fn exec_ternary_op(stack: &mut State, op: &str, l: bool, m: bool, r: bool) -> Result<Token, ProgramError> {
-    let right = match r {
-        true => exec(stack)?,
-        false => stack.pop()?,
-    };
-    println!("right: {}", right);
-    let middle = match m {
-        true => exec(stack)?,
-        false => stack.pop()?,
-    };
-    println!("middle: {}", middle);
-    let left = match l {
-        true => exec(stack)?,
-        false => stack.pop()?,
-    };
-    println!("left: {}", left);
-    match op {
-        "if" => left.if_exp(middle, right, stack),
-        "foldl" => left.foldl(middle, right),
-        _ => Err(ProgramError::UnknownSymbol)
+fn eval_list(state: &mut State, t: Token) -> Result<Option<Token>, ProgramError> {
+    match t {
+        Token::List(items) => {
+            let mut updated_list = Vec::<Token>::new();
+            for item in items {
+                let token = match item {
+                    Token::Symbol(op) => state.get_bind(op.as_str())?.unwrap(),
+                    Token::List(_) => eval_list(state, item)?.unwrap(),
+                    _ => item
+                };
+                updated_list.push(token);
+            }
+            Ok(Some(Token::List(updated_list)))
+        },
+        _ => Err(ProgramError::ExpectedList)
     }
 }

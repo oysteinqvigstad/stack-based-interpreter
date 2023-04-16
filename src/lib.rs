@@ -4,7 +4,6 @@ mod token;
 mod state;
 
 use state::State;
-use token::{ProgramError, Token};
 use crate::interpreter::execute_program;
 use std::io::{self, BufRead, Error, Write};
 use crate::parser::parse_string_to_instructions;
@@ -14,6 +13,10 @@ use crate::parser::parse_string_to_instructions;
 /// This is one of two modes the program can operate in. REPL will read input
 /// from the user in a loop, continuously operating on the same stack and
 /// report back any warnings provided by the program
+///
+/// # Errors
+///
+/// Returns IO error if reading from `stdout`, such as if non UTF-8 chars are encountered
 ///
 pub fn repl_mode() -> Result<(), Error> {
     // create handle for input and output stream
@@ -50,8 +53,12 @@ pub fn repl_mode() -> Result<(), Error> {
 
 /// Utility function used for integration testing
 ///
-/// This function takes an immutable string, parses it, executes it
-/// and returns the result back as a string for evaluation
+/// Any tests in `/tests/tests.rs` will pass through here. It takes a string,
+/// parses it, executes it, and evaluates it against the test
+///
+/// # Arguments
+///
+/// * `input` - input string to be parsed and executed
 ///
 pub fn t(input: &str) -> String {
     let mut state = State::new();

@@ -1,8 +1,24 @@
 use std::cmp::Ordering;
 use crate::state::State;
 use std::collections::VecDeque;
-use crate::token::{ProgramError, Token};
+use crate::token::Token;
 
+/// Error types that may propagate during interpretation
+#[derive(Debug)]
+pub enum ProgramError {
+    StackEmpty,
+    UnknownSymbol,
+    ExpectedBool,
+    ExpectedBoolOrNumber,
+    ExpectedEnumerable,
+    ExpectedQuotation,
+    ExpectedString,
+    ExpectedList,
+    ExpectedVariable,
+    DivisionByZero,
+    ProgramFinishedWithMultipleValues,
+    NumberConversionError,
+}
 
 /// Entry point for the interpreter
 ///
@@ -36,6 +52,10 @@ pub fn execute_program(state: &mut State) -> Result<Token, ProgramError> {
 /// and determine what kind it is. If it is a operation, it will send it to
 /// the dispatcher. If it is a list, then it will try to replace bound items and
 /// then add to the stack. For all other items, they are immediately placed on the stack
+///
+/// # Arguments
+///
+/// * `state` - The stack, instruction list, list of functions and bindings
 ///
 /// # Errors
 ///

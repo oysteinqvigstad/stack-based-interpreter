@@ -44,7 +44,6 @@ pub fn repl_mode() -> Result<(), Error> {
                 state.instruction_set.clear();
             }
         }
-        println!("{:?}", state);
     }
 }
 

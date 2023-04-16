@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use crate::state::State;
 use crate::token::{ProgramError, Token};
 
@@ -88,9 +89,9 @@ fn exec_binary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramE
         "*" => left * right,
         "/" => left / right,
         "div" => left.int_div(right),
-        "<" => left.lt(right),
-        ">" => left.gt(right),
-        "==" => left.eq(right),
+        "<" => left.compare(right, Ordering::Less),
+        ">" => left.compare(right, Ordering::Greater),
+        "==" => left.compare(right, Ordering::Equal),
         "&&" => left.and(right),
         "||" => left.or(right),
         "cons" => right.cons(left),

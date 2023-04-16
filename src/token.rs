@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::fmt::Formatter;
@@ -33,7 +34,7 @@ pub enum ParserError {
     IncompleteQuotation
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Token {
     String(String),
     Int(i128),
@@ -43,6 +44,8 @@ pub enum Token {
     Block(Vec<Token>),
     Symbol(String),
 }
+
+
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -57,10 +60,6 @@ impl fmt::Display for Token {
         }
     }
 }
-
-
-
-
 
 impl Add for Token {
     type Output = Result<Option<Token>, ProgramError>;
@@ -101,8 +100,8 @@ impl Div for Token {
     type Output = Result<Option<Token>, ProgramError>;
     fn div(self, other: Token) -> Self::Output {
         match type_coert(self, other)? {
-            (_, Token::Int(0)) => Err(ProgramError::DivisionByZero),
-            (_, Token::Float(0.0)) => Err(ProgramError::DivisionByZero),
+            (_, Token::Int(y)) if y == 0 => Err(ProgramError::DivisionByZero),
+            (_, Token::Float(y)) if y == 0.0 => Err(ProgramError::DivisionByZero),
             (Token::Int(x), Token::Int(y)) => rt(Token::Float(x as f32 /y as f32)),
             (Token::Float(x), Token::Float(y)) => rt(Token::Float(x/y)),
             _ => Err(ProgramError::NumberConversionError)
@@ -112,42 +111,26 @@ impl Div for Token {
 impl Token {
     pub fn int_div(self, other: Token) -> Result<Option<Token>, ProgramError> {
         match type_coert(self, other)? {
-            (_, Token::Int(0)) => Err(ProgramError::DivisionByZero),
-            (_, Token::Float(0.0)) => Err(ProgramError::DivisionByZero),
+            (_, Token::Int(y)) if y == 0 => Err(ProgramError::DivisionByZero),
+            (_, Token::Float(y)) if y == 0.0 => Err(ProgramError::DivisionByZero),
             (Token::Int(x), Token::Int(y)) => rt(Token::Int(x / y)),
             (Token::Float(x), Token::Float(y)) => rt(Token::Int((x / y) as i128)),
             _ => Err(ProgramError::NumberConversionError)
         }
     }
 
-    pub fn lt(self, other: Token) -> Result<Option<Token>, ProgramError> {
+
+    pub fn compare(self, other: Token, comparison: Ordering) -> Result<Option<Token>, ProgramError> {
         match type_coert(self, other)? {
-            (Token::Int(x), Token::Int(y)) => rt(Token::Bool(x < y)),
-            (Token::Float(x), Token::Float(y)) => rt(Token::Bool(x < y)),
-            (Token::Bool(x), Token::Bool(y)) => rt(Token::Bool(x < y)),
-            _ => Err(ProgramError::ExpectedBoolOrNumber)
+            (Token::Int(x), Token::Int(y)) => rt(Token::Bool(compare_values(&x, &y, comparison))),
+            (Token::Float(x), Token::Float(y)) => rt(Token::Bool(compare_values(&x, &y, comparison))),
+            (Token::Bool(x), Token::Bool(y)) => rt(Token::Bool(compare_values(&x, &y, comparison))),
+            (Token::String(x), Token::String(y)) => rt(Token::Bool(compare_values(&x, &y, comparison))),
+            (Token::List(x), Token::List(y)) => rt(Token::Bool(compare_values(&x, &y, comparison))),
+            _ => Err(ProgramError::ExpectedBoolOrNumber),
         }
     }
 
-    pub fn gt(self, other: Token) -> Result<Option<Token>, ProgramError> {
-        match type_coert(self, other)? {
-            (Token::Int(x), Token::Int(y)) => rt(Token::Bool(x > y)),
-            (Token::Float(x), Token::Float(y)) => rt(Token::Bool(x > y)),
-            (Token::Bool(x), Token::Bool(y)) => rt(Token::Bool(x > y)),
-            _ => Err(ProgramError::ExpectedBoolOrNumber)
-        }
-    }
-
-    pub fn eq(self, other: Token) -> Result<Option<Token>, ProgramError> {
-        match type_coert(self, other)? {
-            (Token::Int(x), Token::Int(y)) => rt(Token::Bool(x == y)),
-            (Token::Float(x), Token::Float(y)) => rt(Token::Bool(x == y)),
-            (Token::Bool(x), Token::Bool(y)) => rt(Token::Bool(x == y)),
-            (Token::String(x), Token::String(y)) => rt(Token::Bool(x == y)),
-            (Token::List(x), Token::List(y)) => rt(Token::Bool(x == y)),
-            _ => Err(ProgramError::ExpectedBoolOrNumber)
-        }
-    }
 
     pub fn not(self: Token) -> Result<Option<Token>, ProgramError> {
         match self {
@@ -396,5 +379,13 @@ fn type_coert(left: Token, right: Token) -> Result<(Token, Token), ProgramError>
         (Token::Int(x), Token::Float(y)) => Ok((Token::Float(x as f32), Token::Float(y))),
         (Token::Float(x), Token::Int(y)) => Ok((Token::Float(x), Token::Float(y as f32))),
         _ => Err(ProgramError::NumberConversionError)
+    }
+}
+
+fn compare_values<T: PartialOrd + PartialEq>(x: &T, y: &T, comparison: Ordering) -> bool {
+    match comparison {
+        Ordering::Less => x < y,
+        Ordering::Greater => x > y,
+        Ordering::Equal => x == y,
     }
 }

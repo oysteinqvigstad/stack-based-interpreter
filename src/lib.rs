@@ -4,10 +4,9 @@ mod token;
 mod state;
 
 use state::State;
-use token::{ParserError, ProgramError, Token};
+use token::{ProgramError, Token};
 use crate::interpreter::exec;
 use std::io::{self, BufRead, Error, Write};
-use std::os::linux::raw::stat;
 use crate::parser::parse;
 
 /// Read-Evaluate-Print-Loop (REPL)

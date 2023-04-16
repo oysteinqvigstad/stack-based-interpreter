@@ -1,5 +1,3 @@
-use std::collections::{HashMap, VecDeque};
-use std::result;
 use crate::token::Token;
 use crate::token::ParserError;
 use crate::state::State;
@@ -99,7 +97,7 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token,
     }
 }
 
-// make_string will concatinate anything between two double quotes. Will return
+// make_string will concatenate anything between two double quotes. Will return
 // an error if no closing double quote is given
 fn make_string(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
     *index += 1;

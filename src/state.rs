@@ -1,10 +1,7 @@
 use std::fmt;
 use std::collections::{HashMap, VecDeque};
-use std::hash::Hash;
 use crate::interpreter::exec_entry;
-use crate::parser::lex;
 use crate::token::{ProgramError, Token};
-use crate::token::ProgramError::ExpectedBoolOrNumber;
 
 #[derive(Debug, Clone)]
 pub struct State {
@@ -26,7 +23,7 @@ impl fmt::Display for State {
 impl State {
     pub fn new() -> Self {
         let stack: Vec<Token> = Vec::new();
-        let mut instruction_set: VecDeque<Token> = VecDeque::new();
+        let instruction_set: VecDeque<Token> = VecDeque::new();
         let bindings: HashMap<String, Token> = HashMap::new();
         let functions: HashMap<String, Token> = HashMap::new();
         Self { stack, instruction_set, bindings, functions }
@@ -143,8 +140,8 @@ impl State {
         }
 
         match self.bindings.get(op) {
-            Some(t) => return Ok(Some(t.clone())),
-            None => return Ok(Some(Token::Symbol(op.to_string())))
+            Some(t) => Ok(Some(t.clone())),
+            None => Ok(Some(Token::Symbol(op.to_string())))
         }
     }
 

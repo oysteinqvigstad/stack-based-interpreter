@@ -325,7 +325,7 @@ impl Token {
         match (self, right.clone()) {
             (Token::Int(x), Token::Block(_)) => {
                 for _ in 0..x {
-                    right.clone().exec(state);
+                    right.clone().exec(state)?;
                 }
                 Ok(None)
             },

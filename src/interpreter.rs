@@ -15,8 +15,8 @@ pub fn exec(state: &mut State) -> Result<Token, ProgramError> {
 
 pub fn exec_entry(state: &mut State) -> Result<(), ProgramError> {
     while !state.instruction_set.is_empty() {
-        for item in state.instruction_set.pop_front() {
-            match item.clone() {
+        if let Some(item) = state.instruction_set.pop_front() {
+            match item {
                 Token::Symbol(_) => match evaluate_operation(state, item)? {
                     Some(token) => state.push(token),
                     None => continue
@@ -25,7 +25,6 @@ pub fn exec_entry(state: &mut State) -> Result<(), ProgramError> {
                     match eval_list(state, item.clone())? {
                         Some(token) => state.push(token),
                         None => continue
-
                     }
                 },
                 _ => state.push(item)

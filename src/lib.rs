@@ -4,17 +4,19 @@ mod token;
 mod state;
 
 use state::State;
-use token::{ParserError, ProgramError, Token};
-use crate::interpreter::exec;
+use crate::interpreter::execute_program;
 use std::io::{self, BufRead, Error, Write};
-use std::os::linux::raw::stat;
-use crate::parser::parse;
+use crate::parser::parse_string_to_instructions;
 
 /// Read-Evaluate-Print-Loop (REPL)
 ///
 /// This is one of two modes the program can operate in. REPL will read input
 /// from the user in a loop, continuously operating on the same stack and
 /// report back any warnings provided by the program
+///
+/// # Errors
+///
+/// Returns IO error if reading from `stdout`, such as if non UTF-8 chars are encountered
 ///
 pub fn repl_mode() -> Result<(), Error> {
     // create handle for input and output stream
@@ -30,11 +32,11 @@ pub fn repl_mode() -> Result<(), Error> {
         // lock stdin, read a line, and store the user input
         stdin.lock().read_line(&mut line).expect("Could not read from stdin");
         // parse the input into tokens and store it in the instruction list
-        match parse(line.as_str(), &mut state) {
+        match parse_string_to_instructions(line.as_str(), &mut state) {
             // if successful, execute the tokens and print the result
             Ok(_) => {
                 // execute and print the interpreted results
-                match execute(&mut state) {
+                match execute_program(&mut state) {
                     Ok(_) => println!("stack : {}", state),
                     Err(e) => println!("stack : {}\nwarn  : {:?}", state, e)
                 }
@@ -45,33 +47,24 @@ pub fn repl_mode() -> Result<(), Error> {
                 state.instruction_set.clear();
             }
         }
-        println!("{:?}", state);
-    }
-}
-
-
-
-
-pub fn execute(stack: &mut State) -> Result<Token, ProgramError> {
-    let result = exec(stack)?;
-    match stack.len() {
-        0 => Err(ProgramError::StackEmpty),
-        1 => Ok(result),
-        _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
     }
 }
 
 
 /// Utility function used for integration testing
 ///
-/// This function takes an immutable string, parses it, executes it
-/// and returns the result back as a string for evaluation
+/// Any tests in `/tests/tests.rs` will pass through here. It takes a string,
+/// parses it, executes it, and evaluates it against the test
+///
+/// # Arguments
+///
+/// * `input` - input string to be parsed and executed
 ///
 pub fn t(input: &str) -> String {
     let mut state = State::new();
-    match parse(input, &mut state) {
+    match parse_string_to_instructions(input, &mut state) {
         Ok(_) => {
-            match execute(&mut state) {
+            match execute_program(&mut state) {
                 Ok(r) => format!("{}", r),
                 Err(e) => format!("{:?}", e)
             }},

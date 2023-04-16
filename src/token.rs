@@ -1,12 +1,10 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
-use std::fmt::Formatter;
 use std::iter::once;
 use std::mem::discriminant;
 use std::ops::{Add, Sub, Mul, Div};
-use crate::interpreter::exec;
-// use crate::interpreter::exec;
+use crate::interpreter::execute_program;
 use crate::parser::{lex};
 use crate::state::State;
 
@@ -48,7 +46,7 @@ pub enum Token {
 
 
 impl fmt::Display for Token {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::String(x) => write!(f, "\"{}\"", x),
             Token::Int(x) => write!(f, "{}", x),
@@ -275,7 +273,7 @@ impl Token {
                 let mut list: Vec<Token> = Vec::new();
                 for item in x {
                     let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
-                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
+                    let result = execute_program(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
                     list.push(result)
                 }
                 rt(Token::List(list))
@@ -295,7 +293,7 @@ impl Token {
                 }
                 let mut temp_state = State::from(state);
                 temp_state.instruction_set = VecDeque::from(instructions);
-                state.push(exec(&mut temp_state)?)
+                state.push(execute_program(&mut temp_state)?)
             }
             Ok(None)
         } else {
@@ -335,7 +333,7 @@ impl Token {
                     if let Token::Block(_) = right {
                         temp_state.instruction_set.push_back(Token::Symbol("exec".to_string()));
                     }
-                    sum = exec(&mut temp_state)?;
+                    sum = execute_program(&mut temp_state)?;
                 }
                 rt(sum)
             },

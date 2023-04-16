@@ -1,6 +1,5 @@
 use std::fmt;
 use std::collections::{HashMap, VecDeque};
-use crate::interpreter::exec_entry;
 use crate::token::{ProgramError, Token};
 
 #[derive(Debug, Clone)]
@@ -94,41 +93,6 @@ impl State {
         }
     }
 
-    pub fn exec_loop(&mut self) -> Result<Option<Token>, ProgramError> {
-        let break_condition = self.pop_instruction()?;
-        let block = self.pop_instruction()?;
-        let break_eval = vec![break_condition.clone(), Token::Symbol("exec".to_string())];
-        let code_block = vec![block.clone(), Token::Symbol("exec".to_string())];
-
-        match break_condition {
-            Token::Block(_) => {
-                let mut state = self.clone();
-                state.instruction_set = VecDeque::from(break_eval.clone());
-
-                loop {
-                    exec_entry(&mut state)?;
-                    match state.stack_pop()? {
-                        Token::Bool(true) => {
-                            // take the resulting stack and return
-                            self.stack = state.stack.clone();
-                            return Ok(None)
-                        },
-                        Token::Bool(false) => {
-                            // run the code block and then evaluate again
-                            let mut both: Vec<Token> = vec![];
-                            both.extend(code_block.clone());
-                            both.extend(break_eval.clone());
-                            state.instruction_set = VecDeque::from(both);
-                            continue
-                        },
-                        _ => return Err(ProgramError::ExpectedBool)
-                    }
-                }
-            },
-            _ => Err(ProgramError::ExpectedQuotation)
-        }
-
-    }
 
 
     pub fn resolve_symbol(&mut self, op: &str) -> Result<Option<Token>, ProgramError> {

@@ -5,9 +5,9 @@ mod state;
 
 use state::State;
 use token::{ProgramError, Token};
-use crate::interpreter::exec;
+use crate::interpreter::execute_program;
 use std::io::{self, BufRead, Error, Write};
-use crate::parser::parse;
+use crate::parser::parse_string_to_instructions;
 
 /// Read-Evaluate-Print-Loop (REPL)
 ///
@@ -29,11 +29,11 @@ pub fn repl_mode() -> Result<(), Error> {
         // lock stdin, read a line, and store the user input
         stdin.lock().read_line(&mut line).expect("Could not read from stdin");
         // parse the input into tokens and store it in the instruction list
-        match parse(line.as_str(), &mut state) {
+        match parse_string_to_instructions(line.as_str(), &mut state) {
             // if successful, execute the tokens and print the result
             Ok(_) => {
                 // execute and print the interpreted results
-                match execute(&mut state) {
+                match execute_program(&mut state) {
                     Ok(_) => println!("stack : {}", state),
                     Err(e) => println!("stack : {}\nwarn  : {:?}", state, e)
                 }
@@ -48,18 +48,6 @@ pub fn repl_mode() -> Result<(), Error> {
 }
 
 
-
-
-pub fn execute(stack: &mut State) -> Result<Token, ProgramError> {
-    let result = exec(stack)?;
-    match stack.len() {
-        0 => Err(ProgramError::StackEmpty),
-        1 => Ok(result),
-        _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
-    }
-}
-
-
 /// Utility function used for integration testing
 ///
 /// This function takes an immutable string, parses it, executes it
@@ -67,9 +55,9 @@ pub fn execute(stack: &mut State) -> Result<Token, ProgramError> {
 ///
 pub fn t(input: &str) -> String {
     let mut state = State::new();
-    match parse(input, &mut state) {
+    match parse_string_to_instructions(input, &mut state) {
         Ok(_) => {
-            match execute(&mut state) {
+            match execute_program(&mut state) {
                 Ok(r) => format!("{}", r),
                 Err(e) => format!("{:?}", e)
             }},

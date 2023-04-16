@@ -4,7 +4,7 @@ use crate::state::State;
 
 
 
-pub fn parse(s: &str, state: &mut State) -> Result<(), ParserError> {
+pub fn parse_string_to_instructions(s: &str, state: &mut State) -> Result<(), ParserError> {
     tokenize_and_parse(&lex(s), state)
 }
 

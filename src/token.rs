@@ -304,26 +304,19 @@ impl Token {
 
     pub fn each(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
         let right = state.pop_instruction()?;
-        match (self, right.clone()) {
-            (Token::List(x), Token::Block(_)) => {
-                for item in x {
-                    let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
-                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
-                    state.push(result)
+        if let (Token::List(x), _) = (self, right.clone()) {
+            for item in x {
+                let mut instructions = vec![item, right.clone()];
+                if let Token::Block(_) = right {
+                    instructions.push(Token::Symbol("exec".to_string()));
                 }
-                Ok(None)
-            },
-            (Token::List(x), _) => {
-                for item in x {
-                    let instructions = vec![item, right.clone()];
-                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
-                    state.push(result)
-                }
-                Ok(None)
+                let mut temp_state = State::from(state);
+                temp_state.instruction_set = VecDeque::from(instructions);
+                state.push(exec(&mut temp_state)?)
             }
-
-
-            _ => Err(ProgramError::ExpectedList)
+            Ok(None)
+        } else {
+            Err(ProgramError::ExpectedList)
         }
     }
 
@@ -350,22 +343,20 @@ impl Token {
     pub fn foldl(self, middle: Token, state: &mut State) -> Result<Option<Token>, ProgramError> {
         let right = state.pop_instruction()?;
         let mut sum = middle.clone();
-        match (self, middle, right.clone()) {
-            (Token::List(x), Token::Int(_), Token::Block(_)) => {
-                for item in x {
-                    let instructions = vec![sum.clone(), item, right.clone(), Token::Symbol("exec".to_string())];
-                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
-                }
-                rt(sum)
-            },
+        match (self, middle, &right) {
+            (Token::List(x), Token::Int(_), Token::Block(_)) |
             (Token::List(x), Token::Int(_), Token::Symbol(_)) => {
                 for item in x {
-                    let instructions = vec![sum.clone(), item, right.clone()];
-                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
+                    let mut temp_state = State::from(state);
+                    temp_state.instruction_set = VecDeque::from(vec![sum.clone(), item, right.clone()]);
+                    if let Token::Block(_) = right {
+                        temp_state.instruction_set.push_back(Token::Symbol("exec".to_string()));
+                    }
+                    sum = exec(&mut temp_state)?;
                 }
                 rt(sum)
             },
-            _ => Err(ProgramError::ExpectedBoolOrNumber)
+            _ => Err(ProgramError::ExpectedList)
         }
     }
 
@@ -380,19 +371,6 @@ impl Token {
         }
     }
 
-    // pub fn get_bind(&self, stack: &mut State) -> Result<Option<Token>, ProgramError> {
-    //     match self {
-    //         Token::Symbol(x) => {
-    //             let result = match stack.bindings.get(x.as_str()) {
-    //                 Some(t) => t,
-    //                 None => self
-    //             };
-    //             Ok(Some(result.clone()))
-    //         },
-    //         _ => Err(ProgramError::ExpectedString)
-    //     }
-    // }
-
     pub fn set_fun(self, other: Token, stack: &mut State) -> Result<Option<Token>, ProgramError> {
         match (self, other.clone()) {
             (Token::Symbol(x), Token::Block(_)) => {
@@ -402,21 +380,6 @@ impl Token {
             _ => Err(ProgramError::ExpectedVariable)
         }
     }
-
-    // pub fn get_fun(&self, stack: &mut State) -> Result<Option<Token>, ProgramError> {
-    //     match self {
-    //         Token::Symbol(x) => {
-    //             let result = match stack.functions.get(x.as_str()) {
-    //                 Some(t) => t,
-    //                 None => self
-    //             };
-    //             Ok(Some(result.clone()))
-    //         },
-    //         _ => Err(ProgramError::ExpectedString)
-    //     }
-    // }
-
-
 
 }
 

@@ -32,6 +32,15 @@ impl State {
         Self { stack, instruction_set, bindings, functions }
     }
 
+    pub fn from(other: &State) -> Self {
+        let stack: Vec<Token> = Vec::new();
+        let instruction_set: VecDeque<Token> = VecDeque::new();
+        let bindings = other.bindings.clone();
+        let functions = other.functions.clone();
+        Self { stack, instruction_set, bindings, functions }
+    }
+
+
     pub fn push(&mut self, token: Token) {
         self.stack.push(token)
     }

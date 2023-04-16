@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::fmt::Formatter;
 use std::iter::once;
@@ -292,7 +292,7 @@ impl Token {
                 let mut list: Vec<Token> = Vec::new();
                 for item in x {
                     let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
-                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
                     list.push(result)
                 }
                 rt(Token::List(list))
@@ -308,7 +308,7 @@ impl Token {
             (Token::List(x), Token::Block(_)) => {
                 for item in x {
                     let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
-                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
                     state.push(result)
                 }
                 Ok(None)
@@ -316,7 +316,7 @@ impl Token {
             (Token::List(x), _) => {
                 for item in x {
                     let instructions = vec![item, right.clone()];
-                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    let result = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
                     state.push(result)
                 }
                 Ok(None)
@@ -354,14 +354,14 @@ impl Token {
             (Token::List(x), Token::Int(_), Token::Block(_)) => {
                 for item in x {
                     let instructions = vec![sum.clone(), item, right.clone(), Token::Symbol("exec".to_string())];
-                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
                 }
                 rt(sum)
             },
             (Token::List(x), Token::Int(_), Token::Symbol(_)) => {
                 for item in x {
                     let instructions = vec![sum.clone(), item, right.clone()];
-                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone() })?;
+                    sum = exec(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
                 }
                 rt(sum)
             },
@@ -380,18 +380,41 @@ impl Token {
         }
     }
 
-    pub fn get_bind(&self, stack: &mut State) -> Result<Option<Token>, ProgramError> {
-        match self {
-            Token::Symbol(x) => {
-                let result = match stack.bindings.get(x.as_str()) {
-                    Some(t) => t,
-                    None => self
-                };
-                Ok(Some(result.clone()))
+    // pub fn get_bind(&self, stack: &mut State) -> Result<Option<Token>, ProgramError> {
+    //     match self {
+    //         Token::Symbol(x) => {
+    //             let result = match stack.bindings.get(x.as_str()) {
+    //                 Some(t) => t,
+    //                 None => self
+    //             };
+    //             Ok(Some(result.clone()))
+    //         },
+    //         _ => Err(ProgramError::ExpectedString)
+    //     }
+    // }
+
+    pub fn set_fun(self, other: Token, stack: &mut State) -> Result<Option<Token>, ProgramError> {
+        match (self, other.clone()) {
+            (Token::Symbol(x), Token::Block(_)) => {
+                stack.functions.insert(x, other.clone());
+                Ok(None)
             },
-            _ => Err(ProgramError::ExpectedString)
+            _ => Err(ProgramError::ExpectedVariable)
         }
     }
+
+    // pub fn get_fun(&self, stack: &mut State) -> Result<Option<Token>, ProgramError> {
+    //     match self {
+    //         Token::Symbol(x) => {
+    //             let result = match stack.functions.get(x.as_str()) {
+    //                 Some(t) => t,
+    //                 None => self
+    //             };
+    //             Ok(Some(result.clone()))
+    //         },
+    //         _ => Err(ProgramError::ExpectedString)
+    //     }
+    // }
 
 
 

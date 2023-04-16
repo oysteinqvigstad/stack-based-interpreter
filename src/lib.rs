@@ -36,7 +36,7 @@ pub fn repl_mode() -> Result<(), Error> {
                 // execute and print the interpreted results
                 match execute(&mut state) {
                     Ok(_) => println!("stack : {}", state),
-                    Err(e) => println!("stack : {}\nwarn : {:?}", state, e)
+                    Err(e) => println!("stack : {}\nwarn  : {:?}", state, e)
                 }
             },
             // if unsuccessful, clear the instructions and print the error
@@ -45,6 +45,7 @@ pub fn repl_mode() -> Result<(), Error> {
                 state.instruction_set.clear();
             }
         }
+        println!("{:?}", state);
     }
 }
 

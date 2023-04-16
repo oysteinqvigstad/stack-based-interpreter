@@ -1,470 +1,234 @@
-# prog2006-assignment-2
+# Instructions
 
-* Submission Deadline: **21.04.2023 - 23:59**
-* Peer-review Deadline: **28.04.2023 - 23:59**
-* Submission must be done through [the submission system](https://10.212.175.82)
-   - https://10.212.175.82
-   - Hash: `cg49jme8eh9dbc0db0sg`
-* Programming language: Rust or Haskell 
+### How to start the program
 
+In the project root, type the following command to build and run the program:
 
-
-# **bprog** :: simple concatenative, stack-based interpreter
-
-**Note** - the specification below might be unclear or may need amendments. Use Issue tracker to post questions, clarification requests, or modification suggestions.
-
-* [Assignment walkthrough video](https://youtu.be/Dw0dWN3yehM)
-* Check Lecture from February 27, 2023.
-* Check `haskell/rpn-calc` project for basics for parsing and using stack to represent your program state.
-* check `haskell/fib-state` project for basics of how to incoroporate State monad into your program.
-
-## Important
-
-* **DO NOT USE** `parsec` library. All programs **must** be parsed simply by `words`.
-* Report in your specification document all the design decisions and assumptions.
-* Precisely report in your self-assessemnt what features are implemented and tested, and what you have not implemented and why.
-
-
-## Overview
-
-We will implement a simple concatenative, stack-based, programming language interpreter. The interpreter is called `bprog`. `bprog` will accept instruction from standard input and execute them following the semantics of the language that we defined below. It can be used as interactive CLI, or, it can be fed with a file containing a program and it will execute it.  
-
-In the CLI mode, the program should parse and interpret the input line by line, in an infinite loop. In the `input file` mode it should work with the entire input. We will discuss those two modes below.
-
-You can implement the language in Haskell (recommended) or Rust, or any other programming language that you chose. Do as many features of the language as you need for the example applications below, eg. `fizzbuzz`, `factorial` or `guess the number`. Describe your choices in the readme file.  The system should have built-in standard functions described in the specification. 
-In addition, it can have "standard library" functions, defined in the language itself. Those are read and defined before the user program gets executed. This should be specified in `prelude.bprog` file, that is read automatically by default by the interpreter. You can place there convenience functions that are useful for a given task.
-
-
-
-# bprog
-
-The `bprog` program is represented as a sequence of arguments and operations. This sequence from text needs to be `parsed` and converted into an internal representation that can subsequently be used and manipulated by the interpreter. The interpreter needs two things - the program, and the current version of the operand stack (where the arguments to operations are stored). To make it simple, 
-
-## Tokeniser and parser
-
-Instead of implementing a proper parser, we will simply use the Haskell command `words`, and use space as a delimiter for all tokens in the language.
-
-To make the task easy, we will use `words` to split the input into tokens. Normally, we write strings like this: `"This is a string"`, lists like that: `[1,2,3]` and tuples like: `(1,"text)`. However, that would require more complex parsing rules. Instead, we will simply use space as a delimiter, so thus we will have:
-* symbols: `a_symbol` Note: because there are no restrictions on symbols, anything that is not a reserved keyword in the language can become a valid symbol, and therefore, a function name.
-* strings: `" this is a string "`
-* lists: `[ 1 2 3 ]`
-* quotations (aka code blocks: `{ 1 2 + }`
-
-
-
-## Interpreter
-
-The interpreter will take the internal representation of the parsed program and execute it. 
-
-There are two modes for the program to operate: REPL mode, in which the `bprog` interprets code line by line and prints the current state of the operand stack; and NORMAL mode, in which the `bprog` takes entire program and interprets the entire thing, expecting to obtain a SINGLE value on top of the stack, that is subsequently printed out to the user.
-
-
-
-## The stack
-
-All arguments to functions are stored and taken from the stack, and all results of functions are put on top of the stack. The instructions can take arbitrary number of arguments from the stack, and produce and arbitrary number of values that are put on the stack. To describe the instructions we use a notation called "stack effects", that looks like that `( left -- right )` where `left` are the variables that are taken from the stack (first popped value on the right-hand side), and `right` depicts what is put onto the stack (from left to right, meaning, the right-most element will be on top of the stack). E.g. to describe addition `+` we write `( x y -- z)` where `x` and `y` are popped from the stack, and `z` is put back, on top.
-
-Note: the stack effects do not mean anything, they are just human readable explanations.
-
-
-## Stack operations
-
-* `dup` ( x -- x x ) duplicates the top element on the stack
-* `swap` ( x y -- y x ) swaps the two top elements on the stack
-* `pop` ( x -- ) removes the top element from the stack
-
-
-# Simple IO
-
-We limit our language to TEXT only. All read/write operation operate on `String` types.
-
-* `print` ( x -- ) takes the top element from the stack and prints it to the standard input (print it with EOL, end-of-line character).
-* `read` ( -- x ) reads a line from standard input and puts it into the stack as string.
-
-
-# String parsing
-
-* `parseInteger` ( s -- i ) takes a string from stack and converts it to Integer and puts it onto the stack
-* `parseFloat` ( s -- f ) same as above but for floats
-* `words` ( s -- list ) takes a string from the stack, splits is with Haskell `words` or Rust `split_whitespace` command and puts a list of tokens onto the stack.
-
-
-## Literals
-
-All literals are simply pushed onto the stack.
-
-* Integers, eg. `0` `1` `200`
-* Floats, eg. `1.0` `200.0`
-* Bools: `True` `False`
-* Strings, delimited by double quotes `"` eg. " hello world "
-* Lists, delimited by square brackets `[ ]`
-
-## Arithmetic
-
-Reuse the code from the calculator. Each operation has the number of operands (arguments) it takes from the stack provided in the round brackets. E.g. addition `+` takes two arguments, so it is written `+` (2). The operations are written in Reverse Polish notation (postfix notation), where the operation is at the end, and the operands are in front.
-
-* `+` ( x y -- x_plus_y ) - addition
-* `-` ( x y -- x_minus_y ) - subtraction
-* `*` ( x y -- mul ) - multiplication
-* `/` ( x y -- fdivision ) - floating point division
-* `div` ( x y -- integer_division ) - integer division
-* `<` ( x y -- bool) checks if `x < y`, and puts true or false on the stack
-* `>` ( x y -- bool) checks if `x > y`, and puts true or false on the stack
-* `==` ( x y -- bool ) checks if `x == y` and puts true or false on the stack
-
-
-
-
-## Logical operations
-
-* `True` - literal
-* `False` - literal 
-* `&&` ( x y -- bool ) - logical AND
-* `||` ( x y -- bool ) - logical OR
-* `not` ( x -- bool ) - logical NOT. I've implemented it such that it also works like a negation on numbers, so, if you call it: `10 not` the program will put `-10` on top of the stack.
-
-
-## `Code block`, called `block`, or `quotation`
-
-Code block (aka just `block` or `quotation`) is a program sequence delimited by curly braces. For example `{ 1 + }` is a quotation that increments the current top element on the stack by 1.
-There is a function `exec` that picks a quotation from the top of the stack and executes it.
-
-**Note**: in some of the functions quotation is expected, but, for single instruction quotation the curly braces can be skipped.  So, for example `3 times { 10 }` is the same as `3 times 10` because the quotation contains ONLY one instruction. The notation without curly braces for single instruction quotations is more ergonomic. `times`, `map`, `foldl`, `each`, `if` should all work with both, quotations for multiple instructions and for single values (no curly braces needed). 
-
-
-## Lists 
-
-Lists are delimited by square brackets. Lists can be nested. List can hold arbitrary types of arguments. Example of valid lists in `bprog`:
-
-```
-[ 1 2 3 ]
-[ " hello " " world " ]
-[ 1 " hello " 2 " world " [ False True ] hello_symbol ]
-```
-
-### List operations
-
-* `head` ( list -- item ) takes a list and returns its head
-* `tail` ( list -- tail ) takes a list and returns the tail
-* `empty` ( list -- bool ) takes a list and returns true if the list is empty 
-* `length` ( list -- len ) puts the length of a given list onto the stack
-* `cons` ( item list -- list ) appends the item in front of the list
-* `append` ( list1 list2 -- list3 ) concatenates both lists
-* `each quotation` ( list -- ) takes a list an a code block, and executes the code block on each of the elements of the list, eg. `[ 1 2 3 ] each { println }` will print three lines with 1, 2, 3 respectively in each of the lines.
-* `map quotation` ( list -- newlist ) takes a list, and a block, and executes the block on each of the elements of the list, forming a new list that is put on the stack. E.g. `[ 1 2 3 ] map { 10 * }` will result in a list `[ 10 20 30 ]`
-* `foldl quotation` ( list initial_accumulator -- final_accumulator ) folds the list from left to right.  E.g. `[ 1 2 3 ] 0 foldl { + }` will result in `6` on top of the stack.
-
-
-## Control flow
-
-Control flow operations operate both, on the argument stack as well as on the program itself. For example, the boolean argument to the if-statement is taken from the stack, but, the `then_block` and `else_block` are taken from the program itself.
-
-* `if then_block else_block` ( bool -- ) `if` expression takes a boolean value from the stack, and executes the `then_code_block` if true, or `else_code_block` if false. The executed block operates in the context of the global stack.
-* `loop break block` ( -- ) execute the block until `break` becomes True. `break` and `block` are expected to be quotations. `break` evaluating to True or False does not leave that value on the stack (it is consumed by the `loop`)
-* `times block` ( num -- ) repeat the block `num` times
-
-### Examples
-
-```
-3 10 > if 
-{ " 3 is MORE than 10 " print } 
-{ " 3 is LESS then 10 " print }
-```
-
-```
-5 5 ==
-if
-{ " hey! five is five " println }
-{ }
-```
-
-Note, that the condition must be on the operand stack BEFORE `if` is called. Both blocks for `if` statement are needed, the THEN block and the ELSE block, but, one of the (or both) can be empty.  The code blocks are curly brace delimited.
-
-Everything in `bprog` is white-space delimited, so you need white space between all the symbols, and white space between " and the string. 
-
-Note also that this is also valid code (white space is needed, indentation is not needed):
-
-```
-{
-  if
-  { " there was True on the stack " println }
-  { " there was False on the stack " println }
-}
-```
-
-This is a code block, that you can assign a name, and use in your program later on. This code block says nothing about the argument stack, so, it can be applied in various contexts, or, assigned to a variable/function name, eg.:
-
-```
-{
-  if
-  { " there was True on the stack " println }
-  { " there was False on the stack " println }
-}
-check_stack_and_print
-swap
-fun
-```
-
-Note, that assignment to variable expects the name to be deeper on the stack, and the value to be on top of the stack, this is why we had to do `swap` before `:=` or `fun`.
-
-
-
-## Assignment to a symbol (variable)
-
-There are two constructs: assignment `:=` and function definition `fun`.
-
-Assignment `:=` takes two arguments, left hand side must be a `symbol` (aka `variable`), and right hand side can be any value different from a symbol, eg. number, bool, list or code_block.
-
-Function definition `fun` takes two arguments, left hand side must be a `symbol` (aka function name), and the right hand side must be quotation (code block).
-
-With the function definition, one can define a named code block (aka function). For example: 
-* `inc { 1 + } fun` defines a new function called `inc` that increments the element on the stack.
-* `sayhello { " hello " write } fun` defines a function `sayhello` that print `hello`.
-* `name " Mariusz " :=` defines a symbol `name` (aka variable) that is of value `" Mariusz "`
-* `age 10 :=` the symbol age now is of value `10`
-
-
-
-## Symbols dictionary and the operand stack
-
-To interpret the functions and variables you need to be able to recognised all already defined symbols. For that, you will use a dictionary that maps symbols to specific values. You will also use stack. There is one global stack that is initially empty. The code blocks are executed always in the context of the global stack and a global dictionary. We use very primitive scoping rules with everything in a single global context. Remember, that:
-* symbols can be re-bound to new values (we do not keep track of types and symbols are mutable!)
-* unknown symbol evaluates to itself, whereas bound symbols evaluate to what they are bound. 
-For example: 
-* `age print` prints `age` (a symbol)
-* `age 10 = age print` prints `10` (a value to which symbol age is now bound)
-* `counter { " hello " print } times` will crash, as the times expects an integer as the first argument, and instead, it got a symbol (that evaluates to itself, which is, a symbol)
-* `counter 10 = counter { " Hello World " print } times` is a valid program and it will print `Hello World` string 10 times.
-
-
-
-
-
-# Error handling
-
-Note: trying to pop an item from an empty stack should result in the program panic (crash). 
-
-For this assignment the error handling is left unspecified, however, you should try to think how to provide meaningful messages back to the user, from both, the program parsing stage, as well as from the program execution. 
-
-The interpreter should stop on error and you should try to provide a meaningful error message to the user.
-
-Example types of errors you might consider. Note: this is NOT an exhaustive list, and, you can parametrise the errors with context string to give the user context on WHERE exactly the error occurred.
-
-```
--- | Represents program execution errors.
-data ProgramError =
-     StackEmpty
-   | UnknownSymbol
-   | ExpectedBool
-   | ExpectedBoolOrNumber
-   | ExpectedEnumerable
-   | ExpectedQuotation
-   | ExpectedList
-   | ExpectedVariable
-   | DivisionByZero
-   | ProgramFinishedWithMultipleValues
-   | NumberConversionError
-     deriving (Eq, Show)
-
--- | Represents parser errors.
-data ParserError =
-    IncompleteString
-  | IncompleteList
-  | IncompleteQuotation
+```bash
+cargo run
 ```
 
 
-## Program execution
 
-The program in `bprog` are expected to produce a SINGLE value on top of the value stack. If the program terminates with zero values on the stack, or with multiple values on the stack, this is considered an Error, and should be reported back to the user.  The single value produced by the program should ALWAYS be printed back to the user (even if the program does not have any IO operations). 
+### How to use the program
 
-
-### Minimal subset (D)
-
-* ability to handle integers and integer arithmetic (from calculator example)
-* ability to handle strings
-* parsing strings: `parseInteger`, `parseFloat`
-* bools: `&&`, `||`
-* stack: `swap`, `dup`, `pop`
-* list: `head`, `tail`, `empty`, `length`, `cons`, `append`
-
-
-### Minimal subset for ambitious minimalists (C)
-
-Same as the minimal subset above plus:
-* quotations: `exec`
-* control flow: `if`, `times`
-* control flow with lists: `map`, `foldl`, `each`
-
-
-### IO
-
-IO makes it impossible for automating the tests, therefore, IO is optional. For people that want to go for B and A, you must have automated tests for EVERYTHING except `print` and `read` and for those three commands, you need to keep them separated from the main execution and interpretation contexts, such that you can have automated tests for everything else. 
-
-
-
-
-# Tests
-
-Below is a set of tests demonstrating `bprog` programs and the expected output of the interpreter. 
-
-This is a copy and paste from my own test implementation. `t` is an utility function that is implemented with `it` for `Hspec` testing framework such that I do not have to repeat the boilerplate code.  It takes the string of a program and expected output of the interpreter, and checks if there was no error and if the output is as expected.  The tests do not test "everything" yet, I've update it shortly. 
-
-Please implement the same official TESTS such that you can list in your submission which tests you pass and which do not pass. 
+Once in `REPL` mode, you should be greeted with the following prompt for interaction:
 
 ```
-  describe "official tests for non-error programs" $ do
-    {-- literals -}
-    t "3"                           "3"
-    t "121231324135634563456363567" "121231324135634563456363567"
-    t "1.0"                         "1.0"
-    t "0.0"                         "0.0"
-    t "-1"                          "-1"
-    t "-1.1"                        "-1.1"
-    t "False"                       "False"
-    t "True"                        "True"
-    t "[ [ ] [ ] ]"                 "[[],[]]"
-    t "[ False [ ] True [ 1 2 ] ]"  "[False,[],True,[1,2]]"
-    t "\" [ so { not if ] and } \"" "\"[ so { not if ] and }\""
-    {-- quotation literals -}
-    t "{ 20 10 + }"             "{ 20 10 + }"
-    t "[ { + } { 10 + } { 20 10 + } ]"   "[{ + },{ 10 + },{ 20 10 + }]"
-    
-    {-- simple arithmetic -}
-    t "1 1 +"               "2"       
-    t "10 20 *"             "200"
-    t "20 2 div"            "10"
-    t "20 2 /"              "10.0"
-    
-    {-- arithmetic with type coercion -}
-    t "1 1.0 +"             "2.0"       
-    t "10 20.0 *"           "200.0"
-    t "20 2.0 div"          "10"
-    t "20.0 2.0 div"        "10"
-    
-    {-- bool operations -}
-    t "False False &&"      "False"
-    t "False True ||"       "True"
-    t "False not"           "True"
-    t "True not"            "False"
-    
-    {-- comparisons -}
-    t "20 10 <"             "False"
-    t "20 10 >"             "True"
-    t "20 10.0 >"           "True"
-    t "20.0 20.0 >"         "False"
-    t "10 10 =="            "True"
-    t "10 10.0 =="          "True"
-    t "True True =="        "True"
-    t "True 40 40 == =="    "True"
-    t "\" abba \" \" abba \" ==" "True"
-    t "[ ] [ ] =="          "True"
-    t "[ 1 2 ] [ 1 2 ] =="  "True"
-    t " [ [ ] ] [ [ ] ] ==" "True"
-    
-    {-- stack operations -}
-    t "10 20 swap pop"          "20"
-    t "10 dup dup + swap pop"   "20"
-    t "10 20 swap dup + div"    "1"
-    
-    {-- length -}
-    t "\" hello \" length"              "5"
-    t "\" hello world \" length"        "11"
-    t "[ 1 2 3 [ ] ] length"            "4"
-    t "{ 10 20 + } length"              "3"
+bprog >
+```
 
-    {-- String parsing -}
-    t "\" 12 \" parseInteger"           "12"
-    t "\" 12.34 \" parseFloat"          "12.34"
-    t "\" adam bob charlie \" words"    "[\"adam\",\"bob\",\"charlie\"]"          
-    
-    {-- lists -}
-    t "[ 1 2 3 ]"           "[1,2,3]"
-    t "[ 1 \" bob \" ]"     "[1,\"bob\"]"
-    t "[ 1 2 ] empty"       "False"
-    t "[ ] empty"           "True"
-    t "[ 1 2 3 ] head"      "1"
-    t "[ 1 2 3 ] length"    "3"
-    t "[ 1 2 3 ] tail"      "[2,3]"
-    t "1 [ ] con"          "[1]"
-    t "1 [ 2 3 ] cons"      "[1,2,3]"
-    t "[ 1 ] [ 2 3 ] append" "[1,2,3]"
-    t "[ 1 2 ] [ ] append"  "[1,2]"
-    t "[ 1 ] [ 2 3 ] cons"  "[[1],2,3]"
+The stack is expressed from left to right, the rightmost being the top element on the stack.
 
-    {-- list quotations -}
-    t "[ 1 2 3 ] map { 10 * }"                              "[10,20,30]"
-    t "[ 1 2 3 ] map { 1 + }"                               "[2,3,4]"
-    t "[ 1 2 3 4 ] map { dup 2 > if { 10 * } { 2 * } }"     "[2,4,30,40]"
-    t "[ 1 2 3 4 ] each { 10 * } + + +"                     "100"
-    t "[ 1 2 3 4 ] 0 foldl { + }"                           "10"
-    t "[ 2 5 ] 20 foldl { div }"                            "2"
-    {-- note no { } needed for 1 instruction code -}
-    t "[ \" 1 \" \" 2 \" \" 3 \" ] each { parseInteger } [ ] cons cons cons" "[1,2,3]"
-    t "[ \" 1 \" \" 2 \" \" 3 \" ] each parseInteger [ ] 3 times cons"       "[1,2,3]"
-    t "[ 1 2 3 4 ] 0 foldl +"                               "10"
-    t "[ 2 5 ] 20 foldl div"                                "2"
-    
-    {-- assignments -}
-    t "age"                             "age"
-    t "age 10 := age"                   "10"
-    t "10 age swap := age"              "10"
-    t "[ 1 2 3 ] list swap := list"     "[1,2,3]"
-    t "age 20 := [ 10 age ]"            "[10,20]"
+#### Example:
 
-    t "inc { 1 + } fun 1 inc"           "2"
-    t "mul10 { 10 * } fun inc { 1 + } fun 10 inc mul10" "110"
-    
-    {-- quotations -}
-    t "{ 20 10 + } exec"                "30"
-    t "10 { 20 + } exec"                "30"
-    t "10 20 { + } exec"                "30"
-    t "{ { 10 20 + } exec } exec"       "30"
-    t "{ { 10 20 + } exec 20 + } exec"  "50"
-    
-    {-- if -}
-    t "True if { 20 } { }"               "20"
-    t "True if { 20 10 + } { 3 }"        "30"
-    t "10 5 5 == if { 10 + } { 100 + }"  "20"
-    t "False if { } { 45 }"              "45"
-    t "True if { False if { 50 } { 100 } } { 30 }" "100"
-
-    {-- if without quotation, more ergonomic expressions -}
-    t "True if 20 { }"                 "20"
-    t "True if { 20 10 + } 3"          "30"
-    t "10 10 5 5 == if + { 100 + }"    "20"
-    t "False if { } 45"                "45"
-    t "True if { False if 50 100 } 30" "100"
-
-    {-- times -}
-    t "1 times { 100 50 + }"                               "150"
-    t "5 times { 1 } [ ] 5 times { cons } 0 foldl { + }"   "5"
-    t "5 times 1     [ ] 5 times   cons   0 foldl   +  "   "5"
-    t "5 times { 10 } + + + +"                             "50"
-    t "5 times 10 4 times +"                               "50"
-
-    {-- loop -}
-    t "1 loop { dup 4 > } { dup 1 + } [ ] 5 times { cons }"         "[1,2,3,4,5]"
-    t "1 loop { dup 4 > } { dup 1 + } [ ] 5 times   cons  "         "[1,2,3,4,5]"
-    t "[ 1 ] loop { dup length 9 > }  { dup head 1 + swap cons }"   "[10,9,8,7,6,5,4,3,2,1]"
-
-
-    t "odd { dup 2 div swap 2 / == if False True } fun \
-     \ 2 odd"                                                        "False"
-    
-    t "odd { dup 2 div swap 2 / == if False True } fun \
-     \ 3 odd"                                                        "True"
-    
-    t "toList { [ ] swap times cons } fun \
-     \ 1 2 3 4 \
-     \ 4 toList"                                                      "[1,2,3,4]"
-    
-    t "gen1toNum { max swap := 1 loop { dup max > } { dup 1 + } } fun \
-     \ 3 gen1toNum + + +"                                            "10"
-
-    t "odd { dup 2 div swap 2 / == if False True } fun \
-     \ toList { [ ] swap times cons } fun \
-     \ gen1toNum { max swap := 1 loop { dup max > } { dup 1 + } } fun \
-     \ 4 gen1toNum 5 toList map odd"                            "[True,False,True,False,True]"
+You can now add literals and operations to the program:
 
 ```
+bprog > 1 4 swap [ 2 3 ] cons
+```
+
+This should parse and execute the following steps:
+
+1. `1` and `4` are put on the stack.
+2. `swap` reverses the two element on the stack
+3. `[2,3]` list literal is put onto the stack
+4. `cons` takes the list (`[2,3]`) and next element (`1`) from the stack and prepends the last one to the list, like this:
+
+```
+stack : 4 [1,2,3]
+warn  : ProgramFinishedWithMultipleValues
+```
+
+We can continue to interact with the existing stack with `REPL`:
+
+```
+bprog > map { 2 * }
+```
+
+This will map each element in the list and multiply it with`2` and return a new list
+
+```
+stack : 4 [2,4,6]
+warn  : ProgramFinishedWithMultipleValues
+```
+
+Lets use `foldl`:
+
+```
+bprog > swap foldl { + }
+```
+
+This will effectively:
+
+1. `swap` will reverse the elements `4` and `[2,4,6]`
+2. with `foldl`, `4` is used as accumulator, and will add `2 + 4 + 6` onto `4`
+
+```
+stack : 16
+```
+
+
+
+# Project Structure
+
+
+
+    ├── Cargo.toml				// Package configuration
+    ├── src	
+    │   ├── interpreter.rs		// Main execution logic for a given instruction set
+    │   ├── lib.rs				// Entry point for REPL, Testing, etc.
+    │   ├── main.rs				// Entry point for the application
+    │   ├── parser.rs			// Lexer and Parser
+    │   ├── state.rs			// Definition of stack, instructions and bindings
+    │   └── token.rs			// Token struct and methods for most operations
+    └── tests					
+    	└── tests.rs			// Integration tests
+
+
+
+# Functional Requirements
+
+1. Parsing:
+   - Parse integers, floats, strings, booleans, lists, quotations, and symbols
+   - Handle parser errors (*IncompleteString*, *IncompleteList*, *IncompleteQuotation*)
+
+2. Interpreter operations:
+
+    a. Stack operations:
+    - Implement `swap`, `dup`, and `pop`
+
+    b. IO operations:
+    - Implement `print` and `read`
+
+    c. Runtime string parsing
+    - Implement `parseInteger`, `parseFloat` and `words`
+      
+
+    d. Arithmetic and boolean operations:
+    - Handle integer and float arithmetic
+    - Implement boolean operations (`&&`, `||`, `not`)
+
+    d. List operations:
+    - Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
+
+    e. Control flow:
+    - Handle quotations
+    - Implement `exec`, `if`, `times`, and `loop`
+    - Implement `map`, `foldl`, and `each` for control flow with lists
+
+    f. Variables and functions:
+    - Handle assignment and function definition with `:=` and `fun`
+    - Evaluate and execute bound symbols (variables and functions)
+    - Implement `'` (tick) operator to put a bound symbol onto the stack
+    - Implement `eval` function to evaluate bound symbols to values
+
+    f. Error handling:
+    - Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
+    - Report errors to the user with meaningful messages
+
+3. Program execution:
+    - Ensure that the interpreter produces a single value on top of the value stack upon program completion
+    - Offer two modes of operation, `REPL` and `NORMAL`
+
+4. I/O:
+    - Implement `print` and `read` operations within the interpreter
+    - Separate I/O from core interpreter logic to support automated testing
+    - Represent the stack using compact pretty notation
+
+5. Automated testing (excluding I/O):
+    - Implement automated tests for all interpreter operations and features except print and read operations 
+
+# Non-functional Requirements
+
+**Performance**: The interpreter should be efficient and execute programs as quickly as possible.
+
+**Error handling**: The interpreter should provide clear and helpful error messages when errors occur, both during parsing and execution.
+
+**Maintainability**: The code should be well-organized, modular, and easy to modify and extend as needed.
+
+**Usability**: The interpreter should be easy to use and have a user-friendly interface for inputting and running programs.
+
+**Compatibility**: The interpreter should be compatible with a wide range of operating systems and environments. The interpreter should be easily portable to different platforms and architectures, and should support cross-compilation if needed.
+
+**Documentation**: The application must be documented, with a report of integration testing, functional requirements, non-functional requirements, and a assessment specification. Based on the assessment specification It should also include a self-assessment report. Short instructions on how to run the program should also be added.
+
+**Testing**: The interpreter should be thoroughly tested with the provided integration tests to ensure correct behavior. 
+
+# Assessment Specifications
+
+The application should:
+
+### Meet most of the functional requirements.
+
+- [ ] **1. Parsing:**
+  - [ ] Parse integers, floats, strings, booleans, lists, quotations, and symbols
+  - [ ] Handle parser errors (*IncompleteString*, *IncompleteList*, *IncompleteQuotation*)
+- [ ] **2. Interpreter operations:**
+  - [ ] a. Stack operations:
+   - [ ] Implement `swap`, `dup`, and `pop`
+  - [ ] b. IO operations:
+    - [ ] Implement `print` and `read`
+  - [ ] c. Runtime string parsing:
+    - [ ] Implement `parseInteger`, `parseFloat`, and `words`
+  - [ ] d. Arithmetic and boolean operations:
+    - [ ] Handle integer and float arithmetic
+    - [ ] Implement boolean operations (`&&`, `||`, `not`)
+  - [ ] e. List operations:
+    - [ ] Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
+  - [ ] f. Control flow:
+    - [ ] Handle quotations
+    - [ ] Implement `exec`, `if`, `times`, and `loop`
+    - [ ] Implement `map`, `foldl`, and `each` for control flow with lists
+  - [ ] g. Variables and functions:
+    - [ ] Handle assignment and function definition with `:=` and `fun`
+    - [ ] Evaluate and execute bound symbols (variables and functions)
+    - [ ] Implement `'` (tick) operator to put a bound symbol onto the stack
+    - [ ] Implement `eval` function to evaluate bound symbols to values
+  - [ ] h. Error handling:
+    - [ ] Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
+    - [ ] Report errors to the user with meaningful messages
+- [ ] **3. Program execution:**
+  - [ ] Ensure that the interpreter produces a single value on top of the value stack upon program completion
+  - [ ] Offer two modes of operation, `REPL` and `NORMAL`
+- [ ] **4. I/O:**
+  - [ ] Implement `print` and `read` operations within the interpreter
+  - [ ] Separate I/O from core interpreter logic to support automated testing
+  - [ ] Represent the stack using compact pretty notation
+- [ ] **5. Automated testing (excluding I/O):**
+  - [ ] Implement automated tests for all interpreter operations and features except print and read operations
+
+### Meet all of the non-functional requirements.
+
+- [ ] **Performance:**
+    - [ ] The interpreter is efficient and executes programs quickly
+
+
+- [ ] **Error handling:**
+  - [ ] Clear and helpful error messages during parsing and execution have been provided
+- [ ] **Maintainability:**
+  - [ ] The code is organized well
+  - [ ] The code is modular
+  - [ ] It is easy to extend features
+- [ ] **Usability:**
+  - [ ] REPL is implemented and simple to use and understand
+- [ ] **Compatibility:**
+  - [ ] There are no restrictive libraries such that the program can compile on different operating systems
+- [ ] **Documentation:**
+  - [ ] Testing report is included
+  - [ ] Functional requirements are included
+  - [ ] Non-functional requirements are included
+  - [ ] Assessment specification is included
+  - [ ] Self-assessment report is included
+  - [ ] Instructions on how to run the program is included
+- [ ] **Testing:**
+  - [ ] REPL seems to adhere to the specs
+  - [ ] Test package including all the integration tests have been included
+    - [ ] At least 80% of the test for the implemented operations have passed
+
+### Maintain professionalism
+
+- [ ] The commit messages are meaningful
+- [ ] A merge request have been made to the PROG2006 labs
+- [ ] Documentation is composed with a focus on thoroughness and professionalism
+

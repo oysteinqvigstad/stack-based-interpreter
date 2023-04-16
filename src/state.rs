@@ -1,14 +1,17 @@
 use std::fmt;
 use std::collections::{HashMap, VecDeque};
+use std::hash::Hash;
 use crate::interpreter::exec_entry;
 use crate::parser::lex;
 use crate::token::{ProgramError, Token};
+use crate::token::ProgramError::ExpectedBoolOrNumber;
 
 #[derive(Debug, Clone)]
 pub struct State {
     pub(crate) stack: Vec<Token>,
     pub(crate) instruction_set: VecDeque<Token>,
-    pub(crate) bindings: HashMap<String, Token>
+    pub(crate) bindings: HashMap<String, Token>,
+    pub(crate) functions: HashMap<String, Token>
 }
 
 
@@ -25,7 +28,16 @@ impl State {
         let stack: Vec<Token> = Vec::new();
         let mut instruction_set: VecDeque<Token> = VecDeque::new();
         let bindings: HashMap<String, Token> = HashMap::new();
-        Self { stack, instruction_set, bindings }
+        let functions: HashMap<String, Token> = HashMap::new();
+        Self { stack, instruction_set, bindings, functions }
+    }
+
+    pub fn from(other: &State) -> Self {
+        let stack: Vec<Token> = Vec::new();
+        let instruction_set: VecDeque<Token> = VecDeque::new();
+        let bindings = other.bindings.clone();
+        let functions = other.functions.clone();
+        Self { stack, instruction_set, bindings, functions }
     }
 
 
@@ -72,6 +84,14 @@ impl State {
 
     pub fn pop_instruction(&mut self) -> Result<Token, ProgramError> {
         match self.instruction_set.pop_front() {
+            // Some(Token::Symbol(op)) => Ok(self.resolve_symbol(op.as_str())?.unwrap()),
+            Some(Token::Symbol(op)) => {
+                match self.resolve_symbol(op.as_str())? {
+                    Some(binding) => Ok(binding),
+                    None => Ok(Token::Symbol(op))
+                }
+                // Ok(self.resolve_symbol(op.as_str())?.unwrap())
+            },
             Some(x) => Ok(x),
             None => Err(ProgramError::StackEmpty)
         }
@@ -85,8 +105,8 @@ impl State {
 
         match break_condition {
             Token::Block(_) => {
-
-                let mut state = State { stack: self.stack.clone(), instruction_set: VecDeque::from(break_eval.clone()), bindings: self.bindings.clone() };
+                let mut state = self.clone();
+                state.instruction_set = VecDeque::from(break_eval.clone());
 
                 loop {
                     exec_entry(&mut state)?;
@@ -114,10 +134,17 @@ impl State {
     }
 
 
-    pub fn get_bind(&mut self, op: &str) -> Result<Option<Token>, ProgramError> {
+    pub fn resolve_symbol(&mut self, op: &str) -> Result<Option<Token>, ProgramError> {
+        // checking if there is a binding or a function. Function will take precedence
+        if let Some(t) = self.functions.get(op) {
+            self.instruction_set.push_front(Token::Symbol("exec".to_string()));
+            self.instruction_set.push_front(t.clone());
+            return Ok(None)
+        }
+
         match self.bindings.get(op) {
-            Some(t) => Ok(Some(t.clone())),
-            None => Ok(Some(Token::Symbol(op.to_string())))
+            Some(t) => return Ok(Some(t.clone())),
+            None => return Ok(Some(Token::Symbol(op.to_string())))
         }
     }
 

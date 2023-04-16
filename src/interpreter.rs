@@ -71,7 +71,8 @@ fn evaluate_operation(stack: &mut State, token: Token) -> Result<Option<Token>, 
                 "if" => exec_unary_op(stack, "if"),
                 "loop" => stack.exec_loop(),
                 ":=" => exec_binary_op(stack, ":="),
-                x => stack.get_bind(x),
+                "fun" => exec_binary_op(stack, "fun"),
+                x => stack.resolve_symbol(x),
             }
         },
         _ => panic!("Non-operation cannot be executed")
@@ -97,6 +98,7 @@ fn exec_binary_op(stack: &mut State, op: &str) -> Result<Option<Token>, ProgramE
         "append" => left.append(right),
         "foldl" => left.foldl(right, stack),
         ":=" => left.set_bind(right, stack),
+        "fun" => left.set_fun(right, stack),
         _ => Err(ProgramError::UnknownSymbol)
     }
 
@@ -129,7 +131,7 @@ fn eval_list(state: &mut State, t: Token) -> Result<Option<Token>, ProgramError>
             let mut updated_list = Vec::<Token>::new();
             for item in items {
                 let token = match item {
-                    Token::Symbol(op) => state.get_bind(op.as_str())?.unwrap(),
+                    Token::Symbol(op) => state.resolve_symbol(op.as_str())?.unwrap(),
                     Token::List(_) => eval_list(state, item)?.unwrap(),
                     _ => item
                 };

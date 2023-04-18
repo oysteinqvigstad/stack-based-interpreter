@@ -2,67 +2,96 @@
 
 ### How to start the program
 
-In the project root, type the following command to build and run the program:
+The application have two modes. `NORMAL` and `REPL` mode.
+
+In Normal mode, the program reads input from the standard input (stdin), which can be redirected from a command or file. This mode is ideal for processing predetermined data or commands. On the other hand, REPL mode offers an interactive environment where users can enter expressions and statements during a live session, while maintaining the state of previous interactions. REPL mode is more lenient with errors, allowing for recovery and providing information about the state of the program's stack at each step of the process.
+
+#### 1. Using NORMAL mode
+
+Normal mode is designed to accept input that has been redirected from another program or from a file. In both cases, the program processes the input, writes the result to the standard output (stdout), and then terminates.
+
+To start Normal mode using cargo and read input from a file named expression.txt, execute the following command from your project's root directory:
+
 
 ```bash
-cargo run
+cargo run < expression.txt
 ```
 
+If you prefer to parse redirected output from another program, use the command below:
+
+```bash
+echo "1 2 + 3 ==" | cargo run
+```
+
+This command first runs the echo command, which outputs the specified expression. Then, the output is piped to cargo run, allowing your program to process the expression and display the result.
 
 
-### How to use the program
+#### 2. Using REPL-mode
 
-Once in `REPL` mode, you should be greeted with the following prompt for interaction:
+To initiate REPL mode using Cargo, execute the following command:
+
+```bash
+cargo run -- repl
+```
+This command launches an interactive REPL session, allowing you to work with your code in real-time and maintain the state of your previous interactions. Upon entering REPL mode, you will be presented with an interactive prompt for user input, as shown below:
 
 ```
 bprog >
 ```
 
-The stack is expressed from left to right, the rightmost being the top element on the stack.
+The stack is represented from left to right, with the rightmost element being the top of the stack.
+
+In addition to entering expressions and statements, you can use the following commands to manage and control your REPL session:
+
+- `:b` Displays a list of active bindings, which are the current variable assignments in the session.
+- `:f` Shows a list of active function definitions, providing an overview of the functions that have been bound
+- `:q` Exits the REPL session, allowing you to return to the command prompt or terminal.
+
+These commands offer convenient ways to explore and manage your REPL environment while working with your code interactively.
 
 #### Example:
 
-You can now add literals and operations to the program:
+You can now interactively add literals and operations to your program in the REPL mode:
 
 ```
 bprog > 1 4 swap [ 2 3 ] cons
 ```
 
-This should parse and execute the following steps:
-
-1. `1` and `4` are put on the stack.
-2. `swap` reverses the two element on the stack
-3. `[2,3]` list literal is put onto the stack
-4. `cons` takes the list (`[2,3]`) and next element (`1`) from the stack and prepends the last one to the list, like this:
+1. the numbers `1` and `4` are pushed onto the stack. 
+2. The `swap` operation reverses the order of the top two elements on the stack. 
+3. The list literal `[2,3]` is then added to the stack. 
+4. The `cons` operation takes the list (`[2,3]`) and the next element (`1`) from the stack, and prepends the latter to the list, resulting in the following stack:
 
 ```
 stack : 4 [1,2,3]
 warn  : ProgramFinishedWithMultipleValues
 ```
 
-We can continue to interact with the existing stack with `REPL`:
+You can continue to interact with the existing stack in the REPL mode:
 
 ```
 bprog > map { 2 * }
 ```
 
-This will map each element in the list and multiply it with`2` and return a new list
+This command maps each element in the list and multiplies it by `2`, returning a new list:
 
 ```
 stack : 4 [2,4,6]
 warn  : ProgramFinishedWithMultipleValues
 ```
 
-Lets use `foldl`:
+Now, let's use the `foldl` operation:
 
 ```
 bprog > swap foldl { + }
 ```
 
-This will effectively:
+This command performs the following actions:
 
-1. `swap` will reverse the elements `4` and `[2,4,6]`
-2. with `foldl`, `4` is used as accumulator, and will add `2 + 4 + 6` onto `4`
+1. The `swap` operation reverses the elements `4` and `[2,4,6]`. 
+2. The `foldl` operation uses `4` as the accumulator and adds the elements `2`, `4`, and `6` to it.
+
+The final stack looks like this:
 
 ```
 stack : 16
@@ -104,7 +133,6 @@ stack : 16
     c. Runtime string parsing
     - Implement `parseInteger`, `parseFloat` and `words`
       
-
     d. Arithmetic and boolean operations:
     - Handle integer and float arithmetic
     - Implement boolean operations (`&&`, `||`, `not`)

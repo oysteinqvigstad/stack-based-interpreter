@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use crate::state::State;
 use std::collections::VecDeque;
+use std::process::exit;
 use crate::token::Token;
 use crate::error::ProgramError;
 
@@ -191,6 +192,7 @@ fn dispatch_nullary_operation(state: &mut State, op: &str) -> Result<Option<Toke
         "read" => state.read(),
         ":b" => state.display(op),
         ":f" => state.display(op),
+        ":q" => exit(0),
         "loop" => execute_loop(state),
         x => state.resolve_symbol(x, true),
     }

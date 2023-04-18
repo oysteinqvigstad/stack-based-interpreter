@@ -19,9 +19,22 @@ pub struct State {
     pub(crate) functions: HashMap<String, Token>
 }
 
-
+// Implement the Display trait for the State struct.
 impl fmt::Display for State {
-    /// Formatter for printing the stack of the state
+    /// Formats the stack of the state for display.
+    ///
+    /// This method is called when using the `{}` format specifier for a `State` instance.
+    /// It formats the stack for display by converting each element to a string and joining
+    /// them with a space.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - A mutable reference to a `fmt::Formatter` that will be used to format the stack.
+    ///
+    /// # Returns
+    ///
+    /// `fmt::Result` indicating the success or failure of the formatting operation.
+    ///
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.stack.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "))
     }
@@ -199,7 +212,13 @@ impl State {
         }
     }
 
-
+    /// Adds the next unbound token from the instruction set to the stack.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Some(Token))` containing the next unbound token if available,
+    /// or a `ProgramError::InstructionListEmpty` error if the instruction set is empty.
+    ///
     pub fn stack_add_unbound(&mut self) -> Result<Option<Token>, ProgramError> {
         match self.instruction_set.pop_front() {
             Some(t) => Ok(Some(t)),
@@ -207,6 +226,19 @@ impl State {
         }
     }
 
+    /// Displays either the bindings or functions depending on the provided operator.
+    ///
+    /// # Arguments
+    ///
+    /// * `op` - The operator to determine the type of display.
+    ///   * `:b` - displays bindings
+    ///   * `:f` - displays functions
+    ///
+    /// # Returns
+    ///
+    /// `Ok(None)` if the display was successful, or a `ProgramError::ExpectedSymbol`
+    /// error if an unrecognized operator was provided.
+    ///
     pub fn display(&self, op: &str) -> Result<Option<Token>, ProgramError> {
         let (header, items) = match op {
             ":b" => ("bindings", &self.bindings),
@@ -221,6 +253,12 @@ impl State {
         Ok(None)
     }
 
+    /// Reads input from the user and returns it as a `Token::String`.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Some(Token))` containing the user input as a `Token::String`.
+    ///
     pub fn read(&self) -> Result<Option<Token>, ProgramError> {
         Ok(Some(Token::String(read_input("input"))))
     }

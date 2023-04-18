@@ -603,6 +603,13 @@ impl Token {
         }
     }
 
+
+    /// Prints a token to stdout
+    ///
+    /// # Returns
+    ///
+    /// None
+    ///
     pub fn print(self) -> Result<Option<Token>, ProgramError> {
         println!("{}", self);
         Ok(None)

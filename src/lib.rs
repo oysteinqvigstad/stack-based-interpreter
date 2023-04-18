@@ -64,6 +64,19 @@ pub fn t(input: &str) -> String {
 
 }
 
+/// Reads a line of input from the user and returns it as a `String`.
+///
+/// This function prints a prompt to the user, reads a line of input from the user,
+/// trims the newline character at the end, and returns the input as a `String`.
+///
+/// # Arguments
+///
+/// * `prompt` - A string slice that represents the prompt to be displayed before reading input.
+///
+/// # Returns
+///
+/// A `String` containing the user's input with the newline character removed.
+///
 pub fn read_input(prompt: &str) -> String {
     // create handle for input and output stream
     let stdin = io::stdin();

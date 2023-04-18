@@ -7,7 +7,8 @@ use std::ops::{Add, Sub, Mul, Div};
 use crate::interpreter::execute_program;
 use crate::parser::{lex};
 use crate::state::State;
-use crate::interpreter::ProgramError;
+use crate::error::ProgramError;
+
 
 /// Represents a single token in the language.
 ///
@@ -70,7 +71,7 @@ impl Add for Token {
         match self.type_coercion(other)? {
             (Token::Int(x), Token::Int(y)) => rt(Token::Int(x+y)),
             (Token::Float(x), Token::Float(y)) => rt(Token::Float(x+y)),
-            _ => Err(ProgramError::NumberConversionError)
+            _ => Err(ProgramError::ExpectedNumber)
         }
     }
 }
@@ -419,8 +420,8 @@ impl Token {
     /// A `Result` containing an optional token or an error.
     ///
     pub fn if_exp(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
-        let middle = state.pop_instruction()?;
-        let right = state.pop_instruction()?;
+        let middle = state.instruction_pop(false)?;
+        let right = state.instruction_pop(false)?;
 
         match (self, middle, right) {
             (Token::Bool(true), Token::Block(y), _) => {
@@ -454,7 +455,7 @@ impl Token {
     /// A `Result` containing an optional token representing the transformed list or an error.
     ///
     pub fn map(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
-        let right = state.pop_instruction()?;
+        let right = state.instruction_pop(false)?;
         match (self, right.clone()) {
             (Token::List(x), Token::Block(_)) => {
                 let mut list: Vec<Token> = Vec::new();
@@ -481,7 +482,7 @@ impl Token {
     /// A `Result` containing an optional token or an error.
     ///
     pub fn each(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
-        let right = state.pop_instruction()?;
+        let right = state.instruction_pop(false)?;
         if let (Token::List(x), _) = (self, right.clone()) {
             for item in x {
                 let mut instructions = vec![item, right.clone()];
@@ -490,7 +491,7 @@ impl Token {
                 }
                 let mut temp_state = State::from(state);
                 temp_state.instruction_set = VecDeque::from(instructions);
-                state.push(execute_program(&mut temp_state)?)
+                state.stack_push(execute_program(&mut temp_state)?)
             }
             Ok(None)
         } else {
@@ -511,7 +512,7 @@ impl Token {
     /// A `Result` containing an optional token or an error.
     ///
     pub fn times(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
-        let right = state.pop_instruction()?;
+        let right = state.instruction_pop(false)?;
         match (self, right.clone()) {
             (Token::Int(x), Token::Block(_)) => {
                 for _ in 0..x {
@@ -541,7 +542,7 @@ impl Token {
     /// A `Result` containing an optional token representing the final accumulator value or an error.
     ///
     pub fn foldl(self, middle: Token, state: &mut State) -> Result<Option<Token>, ProgramError> {
-        let right = state.pop_instruction()?;
+        let right = state.instruction_pop(false)?;
         let mut sum = middle.clone();
         match (self, middle, &right) {
             (Token::List(x), Token::Int(_), Token::Block(_)) |
@@ -601,6 +602,12 @@ impl Token {
             _ => Err(ProgramError::ExpectedVariable)
         }
     }
+
+    pub fn print(self) -> Result<Option<Token>, ProgramError> {
+        println!("{}", self);
+        Ok(None)
+    }
+
 
     /// Coerces the types of the two input tokens to a common type.
     ///

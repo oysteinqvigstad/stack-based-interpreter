@@ -1,13 +1,7 @@
 use crate::token::Token;
 use crate::state::State;
+use crate::error::ParserError;
 
-/// Error types that may propagate during parsing
-#[derive(Debug)]
-pub enum ParserError {
-    IncompleteString,
-    IncompleteList,
-    IncompleteQuotation
-}
 
 /// Entry point for the parser
 ///
@@ -178,7 +172,7 @@ fn make_collection(index: &mut usize, words: &[&str], t: Token) -> Result<Token,
             *index += 1;
         }
     }
-    // make the collection type and tokenize anyting in between
+    // make the collection type and tokenize anything in between
     match (t, level) {
         (Token::List(_), 0)  => {
             tokenize_and_parse(&words[start_index..*index], &mut collection_state)?;

@@ -2,23 +2,8 @@ use std::cmp::Ordering;
 use crate::state::State;
 use std::collections::VecDeque;
 use crate::token::Token;
+use crate::error::ProgramError;
 
-/// Error types that may propagate during interpretation
-#[derive(Debug)]
-pub enum ProgramError {
-    StackEmpty,
-    UnknownSymbol,
-    ExpectedBool,
-    ExpectedBoolOrNumber,
-    ExpectedEnumerable,
-    ExpectedQuotation,
-    ExpectedString,
-    ExpectedList,
-    ExpectedVariable,
-    DivisionByZero,
-    ProgramFinishedWithMultipleValues,
-    NumberConversionError,
-}
 
 /// Entry point for the interpreter
 ///
@@ -40,7 +25,7 @@ pub fn execute_program(state: &mut State) -> Result<Token, ProgramError> {
 
     match state.len() {
         0 => Err(ProgramError::StackEmpty),
-        1 => Ok(state.peek()?.unwrap()),
+        1 => Ok(state.stack_peek()?.unwrap()),
         _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
     }
 }
@@ -66,17 +51,17 @@ pub fn start_runtime(state: &mut State) -> Result<(), ProgramError> {
         if let Some(item) = state.instruction_set.pop_front() {
             match item {
                 Token::Symbol(op) => match dispatch_operation(state, op.as_str())? {
-                    Some(token) => state.push(token),
+                    Some(token) => state.stack_push(token),
                     None => continue
                 },
                 Token::List(_) => {
                     match replace_items_with_bindings(state, item.clone())? {
-                        Some(token) => state.push(token),
+                        Some(token) => state.stack_push(token),
                         None => continue
                     }
                 },
-                _ => state.push(item)
-            };
+                _ => state.stack_push(item)
+            }
         }
     }
     Ok(())
@@ -97,10 +82,10 @@ pub fn start_runtime(state: &mut State) -> Result<(), ProgramError> {
 /// Returns ProgramError if the operation cannot complete
 ///
 fn dispatch_operation(state: &mut State, op: &str) -> Result<Option<Token>, ProgramError> {
-    let unary_ops = vec!["not", "length", "parseInteger", "parseFloat", "words", "pop", "empty",
-                         "head", "tail", "exec", "map", "each", "times", "if"];
-    let binary_ops = vec!["+", "-", "*", "/", "<", ">", "==", "&&", "||", "div", "append", "cons",
-                          "foldl", ":=", "fun"];
+    let unary_ops = ["not", "length", "parseInteger", "parseFloat", "print", "words", "pop",
+                     "empty", "head", "tail", "exec", "map", "each", "times", "if", "print"];
+    let binary_ops = ["+", "-", "*", "/", "<", ">", "==", "&&", "||", "div", "append", "cons",
+                      "foldl", ":=", "fun"];
 
     if unary_ops.contains(&op) {
         dispatch_unary_operation(state, op)
@@ -170,6 +155,7 @@ fn dispatch_unary_operation(state: &mut State, op: &str) -> Result<Option<Token>
         "length" => left.len(),
         "parseInteger" => left.parse_int(),
         "parseFloat" => left.parse_float(),
+        "print" => left.print(),
         "words" => left.words(),
         "empty" => left.empty(),
         "head" => left.head(),
@@ -201,8 +187,12 @@ fn dispatch_nullary_operation(state: &mut State, op: &str) -> Result<Option<Toke
     match op {
         "swap" => state.stack_swap(),
         "dup" =>  state.stack_dup(),
+        "'" => state.stack_add_unbound(),
+        "read" => state.read(),
+        ":b" => state.display(op),
+        ":f" => state.display(op),
         "loop" => execute_loop(state),
-        x => state.resolve_symbol(x),
+        x => state.resolve_symbol(x, true),
     }
 }
 
@@ -227,7 +217,7 @@ fn replace_items_with_bindings(state: &mut State, t: Token) -> Result<Option<Tok
             let mut updated_list = Vec::<Token>::new();
             for item in items {
                 let token = match item {
-                    Token::Symbol(op) => state.resolve_symbol(op.as_str())?.unwrap(),
+                    Token::Symbol(op) => state.resolve_symbol(op.as_str(), true)?.unwrap(),
                     Token::List(_) => replace_items_with_bindings(state, item)?.unwrap(),
                     _ => item
                 };
@@ -252,8 +242,8 @@ fn replace_items_with_bindings(state: &mut State, t: Token) -> Result<Option<Tok
 /// Returns ProgramError if the operation cannot complete
 ///
 fn execute_loop(state: &mut State) -> Result<Option<Token>, ProgramError> {
-    let break_condition = state.pop_instruction()?;
-    let block = state.pop_instruction()?;
+    let break_condition = state.instruction_pop(true)?;
+    let block = state.instruction_pop(true)?;
     let break_eval = vec![break_condition.clone(), Token::Symbol("exec".to_string())];
     let code_block = vec![block.clone(), Token::Symbol("exec".to_string())];
 

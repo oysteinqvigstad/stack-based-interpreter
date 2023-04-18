@@ -1,14 +1,15 @@
 use std::fmt;
 use std::collections::{HashMap, VecDeque};
 use crate::token::Token;
-use crate::interpreter::ProgramError;
-
+use crate::error::ProgramError;
+use crate::read_input;
 
 
 /// State holds the current state of the parsed/executed program
 ///
 /// In REPL mode the state is considered global. However it may make
 /// secondary temporary states for calculating mapped values, etc.
+///
 ///
 #[derive(Debug, Clone)]
 pub struct State {
@@ -76,7 +77,7 @@ impl State {
     ///
     /// * `token` - The `Token` to push onto the stack.
     ///
-    pub fn push(&mut self, token: Token) {
+    pub fn stack_push(&mut self, token: Token) {
         self.stack.push(token)
     }
 
@@ -96,8 +97,8 @@ impl State {
     pub fn stack_swap(&mut self) -> Result<Option<Token>, ProgramError> {
         let right = self.stack_pop()?;
         let left = self.stack_pop()?;
-        self.push(right);
-        self.push(left);
+        self.stack_push(right);
+        self.stack_push(left);
         Ok(None)
         
     }
@@ -110,8 +111,8 @@ impl State {
     ///
     pub fn stack_dup(&mut self) -> Result<Option<Token>, ProgramError> {
         let left = self.stack_pop()?;
-        self.push(left.clone());
-        self.push(left);
+        self.stack_push(left.clone());
+        self.stack_push(left);
         Ok(None)
     }
 
@@ -122,7 +123,7 @@ impl State {
     /// `Ok(Some(Token))` containing the top element of the stack if the stack is not empty,
     /// or a `ProgramError::StackEmpty` error if the stack is empty.
     ///
-    pub fn peek(&mut self) -> Result<Option<Token>, ProgramError> {
+    pub fn stack_peek(&mut self) -> Result<Option<Token>, ProgramError> {
         let size = self.len();
         if size == 0 {
             Err(ProgramError::StackEmpty)
@@ -152,18 +153,18 @@ impl State {
     /// The next `Token` instruction if the instruction set is not empty,
     /// or a `ProgramError::StackEmpty` error if the instruction set is empty.
     ///
-    pub fn pop_instruction(&mut self) -> Result<Token, ProgramError> {
+    pub fn instruction_pop(&mut self, exec: bool) -> Result<Token, ProgramError> {
         match self.instruction_set.pop_front() {
             // Some(Token::Symbol(op)) => Ok(self.resolve_symbol(op.as_str())?.unwrap()),
             Some(Token::Symbol(op)) => {
-                match self.resolve_symbol(op.as_str())? {
+                match self.resolve_symbol(op.as_str(), exec)? {
                     Some(binding) => Ok(binding),
                     None => Ok(Token::Symbol(op))
                 }
                 // Ok(self.resolve_symbol(op.as_str())?.unwrap())
             },
             Some(x) => Ok(x),
-            None => Err(ProgramError::StackEmpty)
+            None => Err(ProgramError::InstructionListEmpty)
         }
     }
 
@@ -180,12 +181,16 @@ impl State {
     /// `Ok(Some(Token))` containing the resolved token if the symbol exists in the bindings
     /// or functions, or the original symbol as a `Token::Symbol` if not found.
     ///
-    pub fn resolve_symbol(&mut self, op: &str) -> Result<Option<Token>, ProgramError> {
+    pub fn resolve_symbol(&mut self, op: &str, exec: bool) -> Result<Option<Token>, ProgramError> {
         // checking if there is a binding or a function. Function will take precedence
         if let Some(t) = self.functions.get(op) {
-            self.instruction_set.push_front(Token::Symbol("exec".to_string()));
-            self.instruction_set.push_front(t.clone());
-            return Ok(None)
+            return if exec {
+                self.instruction_set.push_front(Token::Symbol("exec".to_string()));
+                self.instruction_set.push_front(t.clone());
+                Ok(None)
+            } else {
+                Ok(Some(t.clone()))
+            }
         }
 
         match self.bindings.get(op) {
@@ -193,4 +198,31 @@ impl State {
             None => Ok(Some(Token::Symbol(op.to_string())))
         }
     }
+
+
+    pub fn stack_add_unbound(&mut self) -> Result<Option<Token>, ProgramError> {
+        match self.instruction_set.pop_front() {
+            Some(t) => Ok(Some(t)),
+            None => Err(ProgramError::InstructionListEmpty)
+        }
+    }
+
+    pub fn display(&self, op: &str) -> Result<Option<Token>, ProgramError> {
+        let (header, items) = match op {
+            ":b" => ("bindings", &self.bindings),
+            ":f" => ("functions", &self.functions),
+            _ => Err(ProgramError::ExpectedSymbol)?
+        };
+        print!("{} : ", header);
+        for (key, value) in items {
+            print!("[ {} = {} ] ", key, value);
+        }
+        println!();
+        Ok(None)
+    }
+
+    pub fn read(&self) -> Result<Option<Token>, ProgramError> {
+        Ok(Some(Token::String(read_input("input"))))
+    }
+
 }

@@ -17,9 +17,9 @@ use prog2006_assignment_2::{normal_mode, repl_mode};
 /// ```
 /// $ cargo run -- repl
 /// ```
+///
 fn main() {
-    let command_line_args: Vec<String> = env::args().collect();
-    if command_line_args.contains(&"repl".to_string()) {
+    if env::args().any(|arg| arg == "repl") {
         repl_mode();
     } else {
         normal_mode();

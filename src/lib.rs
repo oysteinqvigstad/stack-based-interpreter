@@ -5,10 +5,10 @@ mod state;
 mod error;
 
 use state::State;
-use crate::interpreter::execute_program;
+use interpreter::execute_program;
 use std::io::{self, BufRead, Write};
-use std::process::exit;
-use crate::parser::parse_string_to_instructions;
+use std::process;
+use parser::parse_string_to_instructions;
 
 /// `repl_mode` starts a Read-Eval-Print Loop (REPL) that reads input lines, parses them as
 /// instructions, and executes the instructions using a `State` object. After each execution,
@@ -37,6 +37,27 @@ pub fn repl_mode() {
     }
 }
 
+/// `normal_mode` reads input lines from standard input, parses them as instructions,
+/// and executes the instructions using a `State` object. If the execution is successful,
+/// it prints the result. If an error occurs during execution, it prints the error message.
+/// If there's an error in parsing the input string to instructions, it prints the error
+/// and exits the program with a status code of 1.
+///
+///
+pub fn normal_mode() {
+    let stdin = io::stdin();
+    let mut state = State::new();
+    for line in stdin.lock().lines() {
+        if let Err(e) = parse_string_to_instructions(line.unwrap().as_str(), &mut state) {
+            println!("{:?}", e);
+            process::exit(1);
+        }
+    }
+    match execute_program(&mut state) {
+        Ok(token) => println!("{}", token),
+        Err(e) => println!("{:?}", e)
+    }
+}
 
 /// Utility function used for integration testing
 ///
@@ -86,24 +107,3 @@ pub fn read_input(prompt: &str) -> String {
     line.trim_end_matches('\n').to_string()
 }
 
-/// `normal_mode` reads input lines from standard input, parses them as instructions,
-/// and executes the instructions using a `State` object. If the execution is successful,
-/// it prints the result. If an error occurs during execution, it prints the error message.
-/// If there's an error in parsing the input string to instructions, it prints the error
-/// and exits the program with a status code of 1.
-///
-///
-pub fn normal_mode() {
-    let stdin = io::stdin();
-    let mut state = State::new();
-    for line in stdin.lock().lines() {
-        if let Err(e) = parse_string_to_instructions(line.unwrap().as_str(), &mut state) {
-            println!("{:?}", e);
-            exit(1);
-        }
-    }
-    match execute_program(&mut state) {
-        Ok(token) => println!("{}", token),
-        Err(e) => println!("{:?}", e)
-    }
-}

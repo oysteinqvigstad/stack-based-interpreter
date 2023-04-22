@@ -4,7 +4,6 @@ use crate::token::Token;
 use crate::error::ProgramError;
 use crate::read_input;
 
-
 /// State holds the current state of the parsed/executed program
 ///
 /// In REPL mode the state is considered global. However it may make
@@ -262,5 +261,4 @@ impl State {
     pub fn read(&self) -> Result<Option<Token>, ProgramError> {
         Ok(Some(Token::String(read_input("input"))))
     }
-
 }

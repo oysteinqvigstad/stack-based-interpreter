@@ -1,10 +1,9 @@
 use std::cmp::Ordering;
 use crate::state::State;
 use std::collections::VecDeque;
-use std::process::exit;
+use std::process;
 use crate::token::Token;
 use crate::error::ProgramError;
-
 
 /// Entry point for the interpreter
 ///
@@ -30,7 +29,6 @@ pub fn execute_program(state: &mut State) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ProgramFinishedWithMultipleValues)
     }
 }
-
 
 /// Execution component of the interpreter
 ///
@@ -170,7 +168,6 @@ fn dispatch_unary_operation(state: &mut State, op: &str) -> Result<Option<Token>
     }
 }
 
-
 /// Secondary dispatcher for nullary operations
 ///
 /// This function takes zero arguments from the stack before passing to the respective function
@@ -192,13 +189,11 @@ fn dispatch_nullary_operation(state: &mut State, op: &str) -> Result<Option<Toke
         "read" => state.read(),
         ":b" => state.display(op),
         ":f" => state.display(op),
-        ":q" => exit(0),
+        ":q" => process::exit(0),
         "loop" => execute_loop(state),
         x => state.resolve_symbol(x, true),
     }
 }
-
-
 
 /// Transforms a list by replacing any known bindings
 ///
@@ -276,5 +271,4 @@ fn execute_loop(state: &mut State) -> Result<Option<Token>, ProgramError> {
         },
         _ => Err(ProgramError::ExpectedQuotation)
     }
-
 }

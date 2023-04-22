@@ -22,7 +22,6 @@ pub fn parse_string_to_instructions(input_string: &str, state: &mut State) -> Re
     tokenize_and_parse(&lex(input_string), state)
 }
 
-
 /// Lexer
 ///
 /// The lexer takes a string and separates it by whitespace, and returns a slice to
@@ -64,9 +63,6 @@ fn tokenize_and_parse(words: &[&str], state: &mut State) -> Result<(), ParserErr
     Ok(())
 }
 
-
-
-
 /// Generate a token based on a word
 ///
 /// Combines a slice with a borrowed index, so that it can easily skip ahead
@@ -94,9 +90,6 @@ fn get_token(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
         s => Ok(Token::Symbol(s.to_string()))
     }
 }
-
-
-
 
 /// Checks whether the word is a integer representation
 ///
@@ -220,5 +213,3 @@ fn make_string(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> 
         Err(ParserError::IncompleteString)
     }
 }
-
-

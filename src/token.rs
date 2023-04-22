@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::fmt;
 use std::iter::once;
 use std::mem::discriminant;
@@ -8,7 +8,6 @@ use crate::interpreter::execute_program;
 use crate::parser::{lex};
 use crate::state::State;
 use crate::error::ProgramError;
-
 
 /// Represents a single token in the language.
 ///
@@ -25,7 +24,6 @@ pub enum Token {
     Block(Vec<Token>),
     Symbol(String),
 }
-
 
 /// Implements the `Display` trait for the `Token` enum.
 ///
@@ -52,6 +50,7 @@ impl fmt::Display for Token {
         }
     }
 }
+
 /// Implements the `Add` trait for the `Token` enum.
 ///
 /// This enables addition operations between two tokens.
@@ -100,6 +99,7 @@ impl Sub for Token {
         }
     }
 }
+
 /// Implements the `Mul` trait for the `Token` enum.
 ///
 /// This enables multiplication operations between two tokens.
@@ -456,13 +456,13 @@ impl Token {
     ///
     pub fn map(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
         let right = state.instruction_pop(false)?;
-        match (self, right.clone()) {
+        match (self, &right) {
             (Token::List(x), Token::Block(_)) => {
                 let mut list: Vec<Token> = Vec::new();
                 for item in x {
-                    let instructions = vec![item, right.clone(), Token::Symbol("exec".to_string())];
-                    let result = execute_program(&mut State { stack: vec![], instruction_set: VecDeque::from(instructions), bindings: state.bindings.clone(), functions: HashMap::<String, Token>::new() })?;
-                    list.push(result)
+                    let mut temp_state = State::from(state);
+                    temp_state.instruction_set = VecDeque::from(vec![item, right.clone(), Token::Symbol("exec".to_string())]);
+                    list.push(execute_program(&mut temp_state)?)
                 }
                 rt(Token::List(list))
             },
@@ -483,7 +483,7 @@ impl Token {
     ///
     pub fn each(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
         let right = state.instruction_pop(false)?;
-        if let (Token::List(x), _) = (self, right.clone()) {
+        if let (Token::List(x), _) = (self, &right) {
             for item in x {
                 let mut instructions = vec![item, right.clone()];
                 if let Token::Block(_) = right {
@@ -513,7 +513,7 @@ impl Token {
     ///
     pub fn times(self, state: &mut State) -> Result<Option<Token>, ProgramError> {
         let right = state.instruction_pop(false)?;
-        match (self, right.clone()) {
+        match (self, &right) {
             (Token::Int(x), Token::Block(_)) => {
                 for _ in 0..x {
                     right.clone().exec(state)?;
@@ -543,10 +543,10 @@ impl Token {
     ///
     pub fn foldl(self, middle: Token, state: &mut State) -> Result<Option<Token>, ProgramError> {
         let right = state.instruction_pop(false)?;
-        let mut sum = middle.clone();
-        match (self, middle, &right) {
-            (Token::List(x), Token::Int(_), Token::Block(_)) |
-            (Token::List(x), Token::Int(_), Token::Symbol(_)) => {
+        match (self, &middle, &right) {
+            (Token::List(x), Token::Int(_), right @ Token::Block(_)) |
+            (Token::List(x), Token::Int(_), right @ Token::Symbol(_)) => {
+                let mut sum = middle;
                 for item in x {
                     let mut temp_state = State::from(state);
                     temp_state.instruction_set = VecDeque::from(vec![sum.clone(), item, right.clone()]);
@@ -573,9 +573,9 @@ impl Token {
     /// A `Result` containing an optional token or an error.
     ///
     pub fn set_bind(self, other: Token, stack: &mut State) -> Result<Option<Token>, ProgramError> {
-        match (self, other.clone()) {
-            (Token::Symbol(x), _) => {
-                stack.bindings.insert(x, other.clone());
+        match (self, other) {
+            (Token::Symbol(x), other @ _) => {
+                stack.bindings.insert(x, other);
                 Ok(None)
             },
             _ => Err(ProgramError::ExpectedVariable)
@@ -594,9 +594,9 @@ impl Token {
     /// A `Result` containing an optional token or an error.
     ///
     pub fn set_fun(self, other: Token, stack: &mut State) -> Result<Option<Token>, ProgramError> {
-        match (self, other.clone()) {
-            (Token::Symbol(x), Token::Block(_)) => {
-                stack.functions.insert(x, other.clone());
+        match (self, other) {
+            (Token::Symbol(x), other @ Token::Block(_)) => {
+                stack.functions.insert(x, other);
                 Ok(None)
             },
             _ => Err(ProgramError::ExpectedVariable)

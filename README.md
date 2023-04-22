@@ -105,6 +105,7 @@ stack : 16
 
     ├── Cargo.toml				// Package configuration
     ├── src	
+    │   ├── error.rs		    // Enum definitions of errors
     │   ├── interpreter.rs		// Main execution logic for a given instruction set
     │   ├── lib.rs				// Entry point for REPL, Testing, etc.
     │   ├── main.rs				// Entry point for the application

@@ -1,3 +1,5 @@
+[TOC]
+
 # Instructions
 
 ### How to start the program
@@ -132,27 +134,29 @@ stack : 16
     - Implement `print` and `read`
 
     c. Runtime string parsing
+
     - Implement `parseInteger`, `parseFloat` and `words`
-      
+
     d. Arithmetic and boolean operations:
     - Handle integer and float arithmetic
     - Implement boolean operations (`&&`, `||`, `not`)
 
-    d. List operations:
+    e. List operations:
+
     - Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
 
-    e. Control flow:
+    f. Control flow:
     - Handle quotations
     - Implement `exec`, `if`, `times`, and `loop`
     - Implement `map`, `foldl`, and `each` for control flow with lists
 
-    f. Variables and functions:
+    g. Variables and functions:
     - Handle assignment and function definition with `:=` and `fun`
     - Evaluate and execute bound symbols (variables and functions)
     - Implement `'` (tick) operator to put a bound symbol onto the stack
     - Implement `eval` function to evaluate bound symbols to values
 
-    f. Error handling:
+    h. Error handling:
     - Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
     - Report errors to the user with meaningful messages
 
@@ -186,78 +190,123 @@ stack : 16
 
 # Assessment Specifications
 
-The application should:
-
-### Meet most of the functional requirements.
-
-- [ ] **1. Parsing:**
-  - [ ] Parse integers, floats, strings, booleans, lists, quotations, and symbols
-  - [ ] Handle parser errors (*IncompleteString*, *IncompleteList*, *IncompleteQuotation*)
-- [ ] **2. Interpreter operations:**
-  - [ ] a. Stack operations:
-   - [ ] Implement `swap`, `dup`, and `pop`
-  - [ ] b. IO operations:
-    - [ ] Implement `print` and `read`
-  - [ ] c. Runtime string parsing:
-    - [ ] Implement `parseInteger`, `parseFloat`, and `words`
-  - [ ] d. Arithmetic and boolean operations:
-    - [ ] Handle integer and float arithmetic
-    - [ ] Implement boolean operations (`&&`, `||`, `not`)
-  - [ ] e. List operations:
-    - [ ] Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
-  - [ ] f. Control flow:
-    - [ ] Handle quotations
-    - [ ] Implement `exec`, `if`, `times`, and `loop`
-    - [ ] Implement `map`, `foldl`, and `each` for control flow with lists
-  - [ ] g. Variables and functions:
-    - [ ] Handle assignment and function definition with `:=` and `fun`
-    - [ ] Evaluate and execute bound symbols (variables and functions)
-    - [ ] Implement `'` (tick) operator to put a bound symbol onto the stack
-    - [ ] Implement `eval` function to evaluate bound symbols to values
-  - [ ] h. Error handling:
-    - [ ] Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
-    - [ ] Report errors to the user with meaningful messages
-- [ ] **3. Program execution:**
-  - [ ] Ensure that the interpreter produces a single value on top of the value stack upon program completion
-  - [ ] Offer two modes of operation, `REPL` and `NORMAL`
-- [ ] **4. I/O:**
-  - [ ] Implement `print` and `read` operations within the interpreter
-  - [ ] Separate I/O from core interpreter logic to support automated testing
-  - [ ] Represent the stack using compact pretty notation
-- [ ] **5. Automated testing (excluding I/O):**
-  - [ ] Implement automated tests for all interpreter operations and features except print and read operations
-
-### Meet all of the non-functional requirements.
-
-- [ ] **Performance:**
-    - [ ] The interpreter is efficient and executes programs quickly
+This assessment specification makes use of a checklist followed by a  weighted summary table, which aims to deliver a subjective score based  on each specified criterion. The checklist guarantees a consistent and  comprehensive evaluation process. It is crucial to note that the weights and specifications in this assessment may not accurately represent the  true quality of work and might fail to consider numerous details.
 
 
-- [ ] **Error handling:**
-  - [ ] Clear and helpful error messages during parsing and execution have been provided
-- [ ] **Maintainability:**
-  - [ ] The code is organized well
-  - [ ] The code is modular
-  - [ ] It is easy to extend features
-- [ ] **Usability:**
-  - [ ] REPL is implemented and simple to use and understand
-- [ ] **Compatibility:**
-  - [ ] There are no restrictive libraries such that the program can compile on different operating systems
-- [ ] **Documentation:**
-  - [ ] Testing report is included
-  - [ ] Functional requirements are included
-  - [ ] Non-functional requirements are included
-  - [ ] Assessment specification is included
-  - [ ] Self-assessment report is included
-  - [ ] Instructions on how to run the program is included
-- [ ] **Testing:**
-  - [ ] REPL seems to adhere to the specs
-  - [ ] Test package including all the integration tests have been included
-    - [ ] At least 80% of the test for the implemented operations have passed
 
-### Maintain professionalism
+### Functional requirements.
+
+**1. Parsing:**
+
+- [ ] Parse integers, floats, strings, booleans, lists, quotations, and symbols
+- [ ] Handle parser errors (*IncompleteString*, *IncompleteList*, *IncompleteQuotation*)
+
+**2. Interpreter operations:**
+
+a. Stack operations:
+
+- [ ] Implement `swap`, `dup`, and `pop`
+
+b. IO operations:
+- [ ] Implement `print` and `read`
+
+c. Runtime string parsing:
+- [ ] Implement `parseInteger`, `parseFloat`, and `words`
+
+d. Arithmetic and boolean operations:
+- [ ] Handle integer and float arithmetic
+- [ ] Implement boolean operations (`&&`, `||`, `not`)
+
+e. List operations:
+- [ ] Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
+
+f. Control flow:
+- [ ] Handle quotations
+- [ ] Implement `exec`, `if`, `times`, and `loop`
+- [ ] Implement `map`, `foldl`, and `each` for control flow with lists
+
+g. Variables and functions:
+- [ ] Handle assignment and function definition with `:=` and `fun`
+- [ ] Evaluate and execute bound symbols (variables and functions)
+- [ ] Implement `'` (tick) operator to put a bound symbol onto the stack
+- [ ] Implement `eval` function to evaluate bound symbols to values
+
+h. Error handling:
+- [ ] Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
+- [ ] Report errors to the user with meaningful messages
+
+**3. Program execution:**
+
+- [ ] Ensure that the interpreter produces a single value on top of the value stack upon program completion
+- [ ] Offer two modes of operation, `REPL` and `NORMAL`
+
+**4. I/O:**
+
+- [ ] Implement `print` and `read` operations within the interpreter
+- [ ] Separate I/O from core interpreter logic to support automated testing
+- [ ] Represent the stack using compact pretty notation
+
+**5. Automated testing (excluding I/O):**
+
+- [ ] Implement automated tests for all interpreter operations and features except print and read operations
+
+### Non-functional requirements.
+
+**Performance:**
+
+- [ ] The interpreter is efficient and executes programs quickly
+- [ ] The tests should not take a maximum of 1 seconds to complete.
+
+**Error handling:**
+
+- [ ] Clear and helpful error messages during parsing and execution have been provided
+- [ ] The program does not appear to crash easily
+
+**Maintainability:**
+
+- [ ] The code is organized well
+- [ ] The code is modular
+- [ ] It is easy to extend features
+- [ ] The code is easy to read
+
+**Usability:**
+
+- [ ] REPL is implemented and simple to use and understand
+- [ ] There are no restrictive libraries such that the program can compile on different operating systems
+
+**Documentation:**
+
+- [ ] Testing report is included
+- [ ] Functional requirements are included
+- [ ] Non-functional requirements are included
+- [ ] Assessment specification is included
+- [ ] Self-assessment report is included
+- [ ] Instructions on how to run the program is included
+
+**Testing:**
+
+- [ ] REPL seems to adhere to the specs
+- [ ] Test package including all the integration tests have been included
+- [ ] At least 80% of the test for the implemented operations have passed
+
+**Professionalism:**
 
 - [ ] The commit messages are meaningful
 - [ ] A merge request have been made to the PROG2006 labs
 - [ ] Documentation is composed with a focus on thoroughness and professionalism
 
+
+
+### Evaluation
+
+| Criteria        | Weight | Evaluation | Score |
+| --------------- | ------ | ---------- | ----- |
+| Functionality   | 40%    |            |       |
+| Documentation   | 20%    |            |       |
+| Maintainability | 15%    |            |       |
+| Error handling  | 10%    |            |       |
+| Usability       | 5%     |            |       |
+| Professionalism | 5%     |            |       |
+| Performance     | 5%     |            |       |
+
+Final Score: ` _` out of 100

@@ -1,5 +1,5 @@
 mod test_literals {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_literal_int() {
@@ -68,7 +68,7 @@ mod test_literals {
 }
 
 mod test_simple_arithmetic {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_addition() {
@@ -93,7 +93,7 @@ mod test_simple_arithmetic {
 }
 
 mod test_arithmetic_with_type_coercion {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_addition_with_float() {
@@ -117,7 +117,7 @@ mod test_arithmetic_with_type_coercion {
 }
 
 mod test_bool_operations {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_and_operation() {
@@ -141,7 +141,7 @@ mod test_bool_operations {
 }
 
 mod test_comparison {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_less_than_operation() {
@@ -205,7 +205,7 @@ mod test_comparison {
 }
 
 mod test_stack_operations {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_swap_pop() {
@@ -224,7 +224,7 @@ mod test_stack_operations {
 }
 
 mod test_length {
-    use prog2006_assignment_2::t;
+    use bprog::t;
     #[test]
     fn test_hello_length() {
         assert_eq!(t("\" hello \" length"), "5");
@@ -247,7 +247,7 @@ mod test_length {
 }
 
 mod test_string_parsing {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_parse_integer() {
@@ -266,7 +266,7 @@ mod test_string_parsing {
 }
 
 mod test_lists {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_list_creation() {
@@ -330,7 +330,7 @@ mod test_lists {
 }
 
 mod test_list_quotations {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_map_multiply() {
@@ -384,7 +384,7 @@ mod test_list_quotations {
 }
 
 mod test_assignments {
-    use prog2006_assignment_2::t;
+    use bprog::t;
     #[test]
     fn test_variable_name() {
         assert_eq!(t("age"), "age");
@@ -413,7 +413,7 @@ mod test_assignments {
 }
 
 mod test_quotations {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_exec_block() {
@@ -442,7 +442,7 @@ mod test_quotations {
 }
 
 mod test_if {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_if_true() {
@@ -471,7 +471,7 @@ mod test_if {
 }
 
 mod test_if_without_quotation {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_if_true_condensed() {
@@ -500,7 +500,7 @@ mod test_if_without_quotation {
 }
 
 mod test_times {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_times_block() {
@@ -529,7 +529,7 @@ mod test_times {
 }
 
 mod test_loop {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_loop_with_conditional() {
@@ -548,7 +548,7 @@ mod test_loop {
 }
 
 mod test_functions {
-    use prog2006_assignment_2::t;
+    use bprog::t;
 
     #[test]
     fn test_odd_function() {

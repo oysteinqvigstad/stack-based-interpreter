@@ -51,7 +51,7 @@ In addition to entering expressions and statements, you can use the following co
 
 These commands offer convenient ways to explore and manage your REPL environment while working with your code interactively.
 
-#### Example:
+##### REPL-mode Example
 
 You can now interactively add literals and operations to your program in the REPL mode:
 
@@ -105,17 +105,17 @@ stack : 16
 
 
 
-    ├── Cargo.toml				// Package configuration
+    ├── Cargo.toml             // Package configuration
     ├── src	
-    │   ├── error.rs		    // Enum definitions of errors
-    │   ├── interpreter.rs		// Main execution logic for a given instruction set
-    │   ├── lib.rs				// Entry point for REPL, Testing, etc.
-    │   ├── main.rs				// Entry point for the application
-    │   ├── parser.rs			// Lexer and Parser
-    │   ├── state.rs			// Definition of stack, instructions and bindings
-    │   └── token.rs			// Token struct and methods for most operations
+    │   ├── error.rs           // Enum definitions of errors
+    │   ├── interpreter.rs     // Main execution logic for a given instruction set
+    │   ├── lib.rs             // Entry point for REPL, Testing, etc.
+    │   ├── main.rs            // Entry point for the application
+    │   ├── parser.rs          // Lexer and Parser
+    │   ├── state.rs           // Definition of stack, instructions and bindings
+    │   └── token.rs           // Token struct and methods for most operations
     └── tests					
-    	└── tests.rs			// Integration tests
+        └── tests.rs           // Integration tests
 
 
 
@@ -128,9 +128,11 @@ stack : 16
 2. Interpreter operations:
 
     a. Stack operations:
+
     - Implement `swap`, `dup`, and `pop`
 
     b. IO operations:
+
     - Implement `print` and `read`
 
     c. Runtime string parsing
@@ -138,6 +140,7 @@ stack : 16
     - Implement `parseInteger`, `parseFloat` and `words`
 
     d. Arithmetic and boolean operations:
+
     - Handle integer and float arithmetic
     - Implement boolean operations (`&&`, `||`, `not`)
 
@@ -146,17 +149,20 @@ stack : 16
     - Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
 
     f. Control flow:
+
     - Handle quotations
     - Implement `exec`, `if`, `times`, and `loop`
     - Implement `map`, `foldl`, and `each` for control flow with lists
 
     g. Variables and functions:
+
     - Handle assignment and function definition with `:=` and `fun`
     - Evaluate and execute bound symbols (variables and functions)
     - Implement `'` (tick) operator to put a bound symbol onto the stack
     - Implement `eval` function to evaluate bound symbols to values
 
     h. Error handling:
+
     - Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
     - Report errors to the user with meaningful messages
 
@@ -208,30 +214,37 @@ a. Stack operations:
 - [ ] Implement `swap`, `dup`, and `pop`
 
 b. IO operations:
+
 - [ ] Implement `print` and `read`
 
 c. Runtime string parsing:
+
 - [ ] Implement `parseInteger`, `parseFloat`, and `words`
 
 d. Arithmetic and boolean operations:
+
 - [ ] Handle integer and float arithmetic
 - [ ] Implement boolean operations (`&&`, `||`, `not`)
 
 e. List operations:
+
 - [ ] Implement `head`, `tail`, `empty`, `length`, `cons`, and `append`
 
 f. Control flow:
+
 - [ ] Handle quotations
 - [ ] Implement `exec`, `if`, `times`, and `loop`
 - [ ] Implement `map`, `foldl`, and `each` for control flow with lists
 
 g. Variables and functions:
+
 - [ ] Handle assignment and function definition with `:=` and `fun`
 - [ ] Evaluate and execute bound symbols (variables and functions)
 - [ ] Implement `'` (tick) operator to put a bound symbol onto the stack
 - [ ] Implement `eval` function to evaluate bound symbols to values
 
 h. Error handling:
+
 - [ ] Implement and handle program execution errors (*StackEmpty*, *DivisionByZero*, *ExpectedList*, etc.)
 - [ ] Report errors to the user with meaningful messages
 

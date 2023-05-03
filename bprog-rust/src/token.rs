@@ -18,7 +18,7 @@ use crate::error::ProgramError;
 pub enum Token {
     String(String),
     Int(i128),
-    Float(f32),
+    Float(f64),
     Bool(bool),
     List(Vec<Token>),
     Block(Vec<Token>),
@@ -145,7 +145,7 @@ impl Div for Token {
         match self.type_coercion(other)? {
             (_, Token::Int(y)) if y == 0 => Err(ProgramError::DivisionByZero),
             (_, Token::Float(y)) if y == 0.0 => Err(ProgramError::DivisionByZero),
-            (Token::Int(x), Token::Int(y)) => rt(Token::Float(x as f32 /y as f32)),
+            (Token::Int(x), Token::Int(y)) => rt(Token::Float(x as f64 /y as f64)),
             (Token::Float(x), Token::Float(y)) => rt(Token::Float(x/y)),
             _ => Err(ProgramError::NumberConversionError)
         }
@@ -289,7 +289,7 @@ impl Token {
     pub fn parse_float(self: Token) -> Result<Option<Token>, ProgramError> {
         match self {
             Token::String(x) => {
-                match x.parse::<f32>() {
+                match x.parse::<f64>() {
                     Ok(f) => rt(Token::Float(f)),
                     Err(_) => Err(ProgramError::NumberConversionError)
                 }
@@ -632,8 +632,8 @@ impl Token {
             return Ok((self, right))
         }
         match (self, right) {
-            (Token::Int(x), Token::Float(y)) => Ok((Token::Float(x as f32), Token::Float(y))),
-            (Token::Float(x), Token::Int(y)) => Ok((Token::Float(x), Token::Float(y as f32))),
+            (Token::Int(x), Token::Float(y)) => Ok((Token::Float(x as f64), Token::Float(y))),
+            (Token::Float(x), Token::Int(y)) => Ok((Token::Float(x), Token::Float(y as f64))),
             _ => Err(ProgramError::NumberConversionError)
         }
     }

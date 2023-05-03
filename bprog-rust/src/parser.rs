@@ -86,7 +86,7 @@ fn get_token(index: &mut usize, words: &[&str]) -> Result<Token, ParserError> {
         "}" => Err(ParserError::IncompleteQuotation),
         s if is_bool(s) => Ok(Token::Bool(s.to_lowercase().parse::<bool>().unwrap())),
         s if is_integer(s) => Ok(Token::Int(s.parse::<i128>().unwrap())),
-        s if is_float(s) => Ok(Token::Float(s.parse::<f32>().unwrap())),
+        s if is_float(s) => Ok(Token::Float(s.parse::<f64>().unwrap())),
         s => Ok(Token::Symbol(s.to_string()))
     }
 }

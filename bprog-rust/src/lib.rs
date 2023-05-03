@@ -104,6 +104,6 @@ pub fn read_input(prompt: &str) -> String {
     let _ = stdout.flush();
     // read a line from user input
     stdin.lock().read_line(&mut line).expect("Could not read from stdin");
-    line.trim_end_matches('\n').to_string()
+    line.trim_end_matches(&['\r', '\n'][..]).to_string()
 }
 

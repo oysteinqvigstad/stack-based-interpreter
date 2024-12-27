@@ -1,10 +1,55 @@
-[TOC]
+# BPROG Interpreter
 
-# Instructions
+## About
+
+A stack-based interpreter and lexer for BPROG, an educational programming language designed with Reverse Polish Notation (postfix) syntax. The interpreter features a comprehensive stack manipulation system, support for multiple data types, and functional programming constructs.
+
+This project was developed as part of the Programming Language course during my 2nd year of BA in Programming at NTNU. The complete language specifications can be found in [REQUIREMENTS.md](./REQUIREMENTS.md), written by the course coordinator.
+
+## Demo
+
+Short demonstration of the REPL (Read-Eval-Print Loop) mode:
+
+https://github.com/user-attachments/assets/ef7f78a2-918d-416e-b751-eadaac437dcf
+
+
+## Core Features
+#### Stack Operations
+- Basic stack manipulations (`swap`, `dup`, `pop`)
+- Comprehensive error handling for stack operations
+#### Data Types Support
+- Numbers (integers and floats)
+- Strings
+- Booleans (`True`, `False`)
+- Lists (`[]`, with nesting support)
+- Code Blocks (`{}`)
+- Symbols and Variables
+#### Arithmetic & Comparison
+- Basic arithmetic (`+`, `-`, `*`, `/`, `div`)
+- Comparison operators (`<`, `>`, `==`)
+- Support for both integer and floating-point operations
+#### Programming Constructs
+- Conditional execution (`if` and else)
+- Iteration (`times`, while-`loop`)
+- Code block execution (`exec`)
+- Function definitions and execution
+- Variable assignments and evaluations
+- String parsing utilities (`parseInteger`, `parseFloat`, `words`)
+#### List Processing
+- Basic operations (`head`, `tail`, `cons`)
+- List utilities (`empty`, `length`, `append`)
+- Higher-order functions (`map`, `foldl`, `each`)
+#### I/O Operations
+- Text-based input/output (`print`, `read`)
+- Pretty-printed stack representation
+- Robust error propogation system
+
+
+## Instructions
 
 ### How to start the program
 
-The application have two modes. `NORMAL` and `REPL` mode.
+The application has two modes. **NORMAL** and **REPL** (Read-Eval-Print Loop) mode.
 
 In Normal mode, the program reads input from the standard input (stdin), which can be redirected from a command or file. This mode is ideal for processing predetermined data or commands. On the other hand, REPL mode offers an interactive environment where users can enter expressions and statements during a live session, while maintaining the state of previous interactions. REPL mode is more lenient with errors, allowing for recovery and providing information about the state of the program's stack at each step of the process.
 

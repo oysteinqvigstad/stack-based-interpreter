@@ -1,8 +1,6 @@
 # prog2006-assignment-2
 
-* Submission must be done through [the submission system](http://10.212.175.82)
-   - http://10.212.175.82
-   - Hash: `cg49jme8eh9dbc0db0sg`
+* Submission must be done through [the submission system](redacted)
 * Programming language: Rust or Haskell 
 
 

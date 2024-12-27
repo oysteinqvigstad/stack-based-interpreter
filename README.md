@@ -14,9 +14,7 @@ https://github.com/user-attachments/assets/ef7f78a2-918d-416e-b751-eadaac437dcf
 
 There's also a recorded show-and-tell video for the peer-reviewing activity:
 
-https://github.com/user-attachments/assets/c9ab0b62-458a-4a67-b9a8-b30ca86e338b
-
-
+https://github.com/user-attachments/assets/c6e9b8f6-0d7b-43e2-b47b-609c22fc548d
 
 ## Core Features
 #### Stack Operations

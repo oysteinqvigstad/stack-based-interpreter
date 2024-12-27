@@ -4,13 +4,18 @@
 
 A stack-based interpreter and lexer for BPROG, an educational programming language designed with Reverse Polish Notation (postfix) syntax. The interpreter features a comprehensive stack manipulation system, support for multiple data types, and functional programming constructs.
 
-This project was developed as part of the Programming Language course during my 2nd year of BA in Programming at NTNU. The complete language specifications can be found in [REQUIREMENTS.md](./REQUIREMENTS.md), written by the course coordinator.
+This project was developed as part of the Advanced Programming course during my 2nd year of BA in Programming at NTNU. The complete language specifications can be found in [REQUIREMENTS.md](./REQUIREMENTS.md), written by the course coordinator.
 
 ## Demo
 
 Short demonstration of the REPL (Read-Eval-Print Loop) mode:
 
 https://github.com/user-attachments/assets/ef7f78a2-918d-416e-b751-eadaac437dcf
+
+There's also a recorded show-and-tell video for the peer-reviewing activity:
+
+https://github.com/user-attachments/assets/c9ab0b62-458a-4a67-b9a8-b30ca86e338b
+
 
 
 ## Core Features
